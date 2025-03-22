@@ -11,61 +11,74 @@ mongoose.connect("mongodb+srv://legendaryshashankgupta:WyyHrgPLwBc8TIj0@cluster0
     useUnifiedTopology: true
 });
 
-const stockSchema = new mongoose.Schema({
+const itemSchema = new mongoose.Schema({
     itemName: String,
-    quantity: Number
+    quantity: Number,
 });
 
-const Stock = mongoose.model("Stock", stockSchema);
+const Item = mongoose.model("Item", itemSchema);
+
+// Fetch all items
+app.get("/items", async (req, res) => {
+    const items = await Item.find({}, "itemName");
+    res.json(items.map(item => item.itemName));
+});
+
+// Fetch stock details
+app.get("/stock", async (req, res) => {
+    const stock = await Item.find();
+    res.json(stock);
+});
 
 // Add stock
 app.post("/stock/add", async (req, res) => {
     const { itemName, quantity } = req.body;
-    let item = await Stock.findOne({ itemName });
-    if (item) {
-        item.quantity += quantity;
-    } else {
-        item = new Stock({ itemName, quantity });
-    }
-    await item.save();
-    res.json({ message: "Stock added successfully" });
+    const item = await Item.findOneAndUpdate(
+        { itemName },
+        { $inc: { quantity } },
+        { upsert: true, new: true }
+    );
+    res.json(item);
 });
 
 // Remove stock
 app.post("/stock/remove", async (req, res) => {
     const { itemName, quantity } = req.body;
-    const item = await Stock.findOne({ itemName });
-    if (!item) {
-        return res.status(400).json({ message: "Item not found" });
-    }
-    if (item.quantity < quantity) {
+    const item = await Item.findOne({ itemName });
+    if (!item || item.quantity < quantity) {
         return res.status(400).json({ message: "Not enough stock" });
     }
     item.quantity -= quantity;
     await item.save();
-    res.json({ message: "Stock removed successfully" });
-});
-
-// Check stock
-app.get("/stock", async (req, res) => {
-    const stock = await Stock.find();
-    res.json(stock);
-});
-
-// Check stock of a particular item
-app.get("/stock/:itemName", async (req, res) => {
-    const { itemName } = req.params;
-    const item = await Stock.findOne({ itemName });
-    if (!item) {
-        return res.status(400).json({ message: "Item not found" });
-    }
     res.json(item);
 });
 
-// Get list of item names for dropdown
-app.get("/items", async (req, res) => {
-    const stock = await Stock.find().select("itemName -_id");
-    res.json(stock.map(item => item.itemName));
+// Bulk Add Stock
+app.post("/stock/bulk-add", async (req, res) => {
+    const { items } = req.body;
+    for (const { itemName, quantity } of items) {
+        await Item.findOneAndUpdate(
+            { itemName },
+            { $inc: { quantity } },
+            { upsert: true, new: true }
+        );
+    }
+    res.json({ message: "Bulk add successful" });
 });
 
-app.listen(5000, () => console.log("Server started on port 5000"));
+// Bulk Remove Stock
+app.post("/stock/bulk-remove", async (req, res) => {
+    const { items } = req.body;
+    for (const { itemName, quantity } of items) {
+        const item = await Item.findOne({ itemName });
+        if (item && item.quantity >= quantity) {
+            item.quantity -= quantity;
+            await item.save();
+        }
+    }
+    res.json({ message: "Bulk remove successful" });
+});
+
+app.listen(5000, () => {
+    console.log("Server started on port 5000");
+});

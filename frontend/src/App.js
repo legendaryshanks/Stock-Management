@@ -2,54 +2,62 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./styles.css";
 
-function App() {
+const App = () => {
     const [items, setItems] = useState([]);
     const [selectedItem, setSelectedItem] = useState("");
     const [quantity, setQuantity] = useState("");
-    const [stockInfo, setStockInfo] = useState(null);
-    const [allStock, setAllStock] = useState([]);
+    const [bulkData, setBulkData] = useState("");
+    const [stock, setStock] = useState([]);
+    const [operation, setOperation] = useState("add");
 
     useEffect(() => {
-        axios.get("http://localhost:5000/items").then((response) => {
-            setItems(response.data);
-        });
-        fetchAllStock();
+        fetchItems();
+        fetchStock();
     }, []);
 
-    const fetchAllStock = () => {
-        axios.get("http://localhost:5000/stock").then((response) => {
-            setAllStock(response.data);
+    const fetchItems = async () => {
+        const response = await axios.get("http://localhost:5000/items");
+        setItems(response.data);
+    };
+
+    const fetchStock = async () => {
+        const response = await axios.get("http://localhost:5000/stock");
+        setStock(response.data);
+    };
+
+    const handleStockChange = async (type) => {
+        if (!selectedItem || !quantity) return;
+        const url = `http://localhost:5000/stock/${type}`;
+        await axios.post(url, { itemName: selectedItem, quantity: Number(quantity) });
+        fetchStock();
+        setQuantity("");
+    };
+
+    const handleBulkOperation = async () => {
+        if (!bulkData) return;
+        const url = `http://localhost:5000/stock/bulk-${operation}`;
+        const itemsArray = bulkData.split("\n").map(line => {
+            const [itemName, quantity] = line.split(",").map(s => s.trim());
+            return { itemName, quantity: Number(quantity) };
         });
-    };
-
-    const handleAddStock = () => {
-        axios.post("http://localhost:5000/stock/add", { itemName: selectedItem, quantity: Number(quantity) })
-            .then(() => {
-                alert("Stock added successfully");
-                fetchAllStock();
-            })
-            .catch((err) => alert(err.response.data.message));
-    };
-
-    const handleRemoveStock = () => {
-        axios.post("http://localhost:5000/stock/remove", { itemName: selectedItem, quantity: Number(quantity) })
-            .then(() => {
-                alert("Stock removed successfully");
-                fetchAllStock();
-            })
-            .catch((err) => alert(err.response.data.message));
-    };
-
-    const handleViewStock = () => {
-        axios.get(`http://localhost:5000/stock/${selectedItem}`)
-            .then((response) => setStockInfo(response.data))
-            .catch(() => setStockInfo(null));
+        await axios.post(url, { items: itemsArray });
+        fetchStock();
+        setBulkData("");
     };
 
     return (
         <div className="container">
             <h1>Stock Management</h1>
-            <div className="stock-controls">
+            <div className="stock-view">
+                <h2>Current Stock</h2>
+                <ul>
+                    {stock.map((item, index) => (
+                        <li key={index}>{item.itemName}: {item.quantity}</li>
+                    ))}
+                </ul>
+            </div>
+            <div className="controls">
+                <h2>Update Stock</h2>
                 <select onChange={(e) => setSelectedItem(e.target.value)}>
                     <option value="">Select Item</option>
                     {items.map((item, index) => (
@@ -58,42 +66,28 @@ function App() {
                 </select>
                 <input
                     type="number"
-                    placeholder="Enter Quantity"
+                    placeholder="Quantity"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
                 />
-                <button className="add-btn" onClick={handleAddStock}>➕ Add Stock</button>
-                <button className="remove-btn" onClick={handleRemoveStock}>➖ Remove Stock</button>
-                <button className="view-btn" onClick={handleViewStock}>📦 View Stock</button>
+                <button className="add" onClick={() => handleStockChange("add")}>+ Add Stock</button>
+                <button className="remove" onClick={() => handleStockChange("remove")}>- Remove Stock</button>
             </div>
-            {stockInfo && (
-                <div className="stock-info">
-                    <h3>Stock Details</h3>
-                    <p><strong>Item:</strong> {stockInfo.itemName}</p>
-                    <p><strong>Quantity:</strong> {stockInfo.quantity}</p>
-                </div>
-            )}
-            <div className="all-stock">
-                <h2>All Stock</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Item Name</th>
-                            <th>Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {allStock.map((stock, index) => (
-                            <tr key={index}>
-                                <td>{stock.itemName}</td>
-                                <td>{stock.quantity}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="bulk-controls">
+                <h2>Bulk Operations</h2>
+                <select onChange={(e) => setOperation(e.target.value)}>
+                    <option value="add">Bulk Add</option>
+                    <option value="remove">Bulk Remove</option>
+                </select>
+                <textarea
+                    placeholder="Enter items in format: item,quantity (one per line)"
+                    value={bulkData}
+                    onChange={(e) => setBulkData(e.target.value)}
+                />
+                <button className="bulk" onClick={handleBulkOperation}>Execute Bulk Operation</button>
             </div>
         </div>
     );
-}
+};
 
 export default App;
