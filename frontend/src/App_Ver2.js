@@ -27,8 +27,13 @@ const App = () => {
         setItems(response.data);
     };
 
-    const handleStockOperation = async (type) => {
-        await axios.post(`${BACKEND_URL}/stock/${type}`, { itemName, quantity: Number(quantity) });
+    const handleAddStock = async () => {
+        await axios.post(`${BACKEND_URL}/stock/add`, { itemName, quantity: Number(quantity) });
+        fetchStock();
+    };
+
+    const handleRemoveStock = async () => {
+        await axios.post(`${BACKEND_URL}/stock/remove`, { itemName, quantity: Number(quantity) });
         fetchStock();
     };
 
@@ -49,15 +54,14 @@ const App = () => {
             
             <div className="card">
                 <h2>Manage Stock</h2>
-                <input type="text" list="items-list" placeholder="Select or Type Item" value={itemName} onChange={(e) => setItemName(e.target.value)} />
-                <datalist id="items-list">
-                    {items.map(item => <option key={item} value={item} />)}
-                </datalist>
+                <select value={itemName} onChange={(e) => setItemName(e.target.value)}>
+                    <option value="">Select or Type Item</option>
+                    {items.map(item => <option key={item} value={item}>{item}</option>)}
+                </select>
+                <input type="text" placeholder="Item Name" value={itemName} onChange={(e) => setItemName(e.target.value)} />
                 <input type="number" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-                <div className="button-group">
-                    <button onClick={() => handleStockOperation("add")}>Add Stock</button>
-                    <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
-                </div>
+                <button onClick={handleAddStock}>Add Stock</button>
+                <button onClick={handleRemoveStock}>Remove Stock</button>
             </div>
 
             <div className="card">
