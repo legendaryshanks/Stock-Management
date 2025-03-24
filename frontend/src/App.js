@@ -16,18 +16,18 @@ const App = () => {
     }, []);
 
     const fetchItems = async () => {
-        const response = await axios.get("http://localhost:5000/items");
+        const response = await axios.get("https://stock-management-9v8g.onrender.com/items");
         setItems(response.data);
     };
 
     const fetchStock = async () => {
-        const response = await axios.get("http://localhost:5000/stock");
+        const response = await axios.get("https://stock-management-9v8g.onrender.com/stock");
         setStock(response.data);
     };
 
     const handleStockChange = async (type) => {
         if (!selectedItem || !quantity) return;
-        const url = `http://localhost:5000/stock/${type}`;
+        const url = `https://stock-management-9v8g.onrender.com/stock/${type}`;
         await axios.post(url, { itemName: selectedItem, quantity: Number(quantity) });
         fetchStock();
         setQuantity("");
@@ -35,7 +35,7 @@ const App = () => {
 
     const handleBulkOperation = async () => {
         if (!bulkData) return;
-        const url = `http://localhost:5000/stock/bulk-${operation}`;
+        const url = `https://stock-management-9v8g.onrender.com/stock/bulk-${operation}`;
         const itemsArray = bulkData.split("\n").map(line => {
             const [itemName, quantity] = line.split(",").map(s => s.trim());
             return { itemName, quantity: Number(quantity) };
