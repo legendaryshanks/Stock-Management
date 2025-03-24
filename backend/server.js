@@ -8,7 +8,7 @@ app.use(express.json());
 
 const MONGO_URI = "mongodb+srv://legendaryshashankgupta:WyyHrgPLwBc8TIj0@cluster0.dcjcz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
-mongoose.connect($(MONGO_URI), {
+mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
