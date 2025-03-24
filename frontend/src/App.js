@@ -1,20 +1,23 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import "./App.css";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
 
 const BACKEND_URL = "https://stock-management-9v8g.onrender.com";
 
 const App = () => {
-    const [items, setItems] = useState([]);
     const [stock, setStock] = useState([]);
-    const [itemName, setItemName] = useState("");
-    const [quantity, setQuantity] = useState(0);
-    const [bulkItems, setBulkItems] = useState("");
-    const [operation, setOperation] = useState("bulk-add");
-
+    const [orderNumber, setOrderNumber] = useState('');
+    const [partyName, setPartyName] = useState('');
+    const [items, setItems] = useState([]);
+    const [reservedOrders, setReservedOrders] = useState([]);
+    const [executedOrders, setExecutedOrders] = useState([]);
+    const [newItem, setNewItem] = useState('');
+    const [newQuantity, setNewQuantity] = useState('');
+    
     useEffect(() => {
         fetchStock();
-        fetchItems();
+        fetchReservedOrders();
+        fetchExecutedOrders();
     }, []);
 
     const fetchStock = async () => {
@@ -22,73 +25,90 @@ const App = () => {
         setStock(response.data);
     };
 
-    const fetchItems = async () => {
-        const response = await axios.get(`${BACKEND_URL}/items`);
-        setItems(response.data);
+    const fetchReservedOrders = async () => {
+        const response = await axios.get(`${BACKEND_URL}/orders/reserved`);
+        setReservedOrders(response.data);
     };
 
-    const handleStockOperation = async (type) => {
-        await axios.post(`${BACKEND_URL}/stock/${type}`, { itemName, quantity: Number(quantity) });
-        fetchStock();
+    const fetchExecutedOrders = async () => {
+        const response = await axios.get(`${BACKEND_URL}/orders/executed`);
+        setExecutedOrders(response.data);
     };
 
-    const handleBulkOperation = async () => {
-        const bulkData = bulkItems.split("\n").map(line => {
-            const [name, qty] = line.split(",");
-            return { itemName: name.trim(), quantity: Number(qty.trim()) };
+    const addItemToOrder = () => {
+        if (newItem && newQuantity) {
+            setItems([...items, { itemName: newItem, quantity: parseInt(newQuantity) }]);
+            setNewItem('');
+            setNewQuantity('');
+        }
+    };
+
+    const reserveOrder = async () => {
+        const response = await axios.post(`${BACKEND_URL}/orders/reserve`, {
+            orderNumber,
+            partyName,
+            items
         });
-
-        const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
-        await axios.post(url, { items: bulkData });
+        alert(response.data.message);
         fetchStock();
+        fetchReservedOrders();
+    };
+
+    const executeOrder = async (orderNum) => {
+        const response = await axios.post(`${BACKEND_URL}/orders/execute`, { orderNumber: orderNum });
+        alert(response.data.message);
+        fetchStock();
+        fetchReservedOrders();
+        fetchExecutedOrders();
     };
 
     return (
         <div className="container">
-            <h1>Stock Management</h1>
-            
-            <div className="card">
-                <h2>Manage Stock</h2>
-                <input type="text" list="items-list" placeholder="Select or Type Item" value={itemName} onChange={(e) => setItemName(e.target.value)} />
-                <datalist id="items-list">
-                    {items.map(item => <option key={item} value={item} />)}
-                </datalist>
-                <input type="number" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-                <div className="button-group">
-                    <button onClick={() => handleStockOperation("add")}>Add Stock</button>
-                    <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
-                </div>
-            </div>
-
-            <div className="card">
-                <h2>Bulk Operations</h2>
-                <select value={operation} onChange={(e) => setOperation(e.target.value)}>
-                    <option value="bulk-add">Bulk Add</option>
-                    <option value="bulk-remove">Bulk Remove</option>
-                </select>
-                <textarea placeholder="Enter items in format: Name, Quantity" value={bulkItems} onChange={(e) => setBulkItems(e.target.value)} />
-                <button onClick={handleBulkOperation}>Submit</button>
-            </div>
-
-            <div className="card">
-                <h2>Stock Overview</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Item Name</th>
-                            <th>Quantity</th>
+            <h1>Stock Management System</h1>
+            <h2>Current Stock</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Quantity</th>
+                        <th>Reserved</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {stock.map((item, index) => (
+                        <tr key={index}>
+                            <td>{item.itemName}</td>
+                            <td>{item.quantity}</td>
+                            <td>{item.reserved}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {stock.map(item => (
-                            <tr key={item.itemName}>
-                                <td>{item.itemName}</td>
-                                <td>{item.quantity}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                    ))}
+                </tbody>
+            </table>
+            
+            <h2>Reserve Order</h2>
+            <input type="text" placeholder="Order Number" value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} />
+            <input type="text" placeholder="Party Name" value={partyName} onChange={(e) => setPartyName(e.target.value)} />
+            <input type="text" placeholder="Item Name" value={newItem} onChange={(e) => setNewItem(e.target.value)} />
+            <input type="number" placeholder="Quantity" value={newQuantity} onChange={(e) => setNewQuantity(e.target.value)} />
+            <button onClick={addItemToOrder}>Add Item</button>
+            <button onClick={reserveOrder}>Reserve Order</button>
+            
+            <h2>Reserved Orders</h2>
+            <ul>
+                {reservedOrders.map((order, index) => (
+                    <li key={index}>
+                        {order.orderNumber} - {order.partyName}
+                        <button onClick={() => executeOrder(order.orderNumber)}>Execute</button>
+                    </li>
+                ))}
+            </ul>
+            
+            <h2>Executed Orders</h2>
+            <ul>
+                {executedOrders.map((order, index) => (
+                    <li key={index}>{order.orderNumber} - {order.partyName}</li>
+                ))}
+            </ul>
         </div>
     );
 };
