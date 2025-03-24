@@ -56,37 +56,27 @@ app.post("/stock/remove", async (req, res) => {
 // Bulk Add Stock
 app.post("/stock/bulk-add", async (req, res) => {
     const { items } = req.body;
-    try {
-        const bulkOperations = items.map(({ itemName, quantity }) => ({
-            updateOne: {
-                filter: { itemName },
-                update: { $inc: { quantity } },
-                upsert: true,
-            },
-        }));
-        await Item.bulkWrite(bulkOperations);
-        res.json({ message: "Bulk add successful" });
-    } catch (error) {
-        res.status(500).json({ message: "Error processing bulk add", error });
+    for (const { itemName, quantity } of items) {
+        await Item.findOneAndUpdate(
+            { itemName },
+            { $inc: { quantity } },
+            { upsert: true, new: true }
+        );
     }
+    res.json({ message: "Bulk add successful" });
 });
 
 // Bulk Remove Stock
 app.post("/stock/bulk-remove", async (req, res) => {
     const { items } = req.body;
-    try {
-        for (const { itemName, quantity } of items) {
-            const item = await Item.findOne({ itemName });
-            if (!item || item.quantity < quantity) {
-                return res.status(400).json({ message: `Not enough stock for ${itemName}` });
-            }
+    for (const { itemName, quantity } of items) {
+        const item = await Item.findOne({ itemName });
+        if (item && item.quantity >= quantity) {
             item.quantity -= quantity;
             await item.save();
         }
-        res.json({ message: "Bulk remove successful" });
-    } catch (error) {
-        res.status(500).json({ message: "Error processing bulk remove", error });
     }
+    res.json({ message: "Bulk remove successful" });
 });
 
 app.listen(5000, () => {
