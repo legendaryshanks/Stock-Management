@@ -18,16 +18,24 @@ const itemSchema = new mongoose.Schema({
 
 const Item = mongoose.model("Item", itemSchema);
 
+// Fetch paginated stock details
+app.get("/stock", async (req, res) => {
+    const { page = 1, limit = 50 } = req.query;
+    try {
+        const stock = await Item.find()
+            .skip((page - 1) * limit)
+            .limit(Number(limit));
+        const totalItems = await Item.countDocuments();
+        res.json({ stock, totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: Number(page) });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching stock", error });
+    }
+});
+
 // Fetch all items
 app.get("/items", async (req, res) => {
     const items = await Item.find({}, "itemName");
     res.json(items.map(item => item.itemName));
-});
-
-// Fetch stock details
-app.get("/stock", async (req, res) => {
-    const stock = await Item.find();
-    res.json(stock);
 });
 
 // Add stock
