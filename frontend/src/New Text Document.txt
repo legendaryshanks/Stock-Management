@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import "./App.css";
 
 const BACKEND_URL = "https://stock-management-9v8g.onrender.com"; // Update if running locally
@@ -39,6 +41,31 @@ const App = () => {
         await axios.post(`${BACKEND_URL}/stock/${type}`, { itemName, quantity: Number(quantity) });
         fetchStock();
     };
+
+    const handleBulkOperation = async () => {
+        setIsProcessing(true);
+        setMessage("Processing request...");
+        setSkippedItems([]);
+
+        const bulkData = bulkItems.split("\n").map(line => {
+            const [name, qty] = line.split(",");
+            return { itemName: name.trim(), quantity: Number(qty.trim()) };
+        });
+
+        const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
+        const response = await axios.post(url, { items: bulkData });
+
+        if (response.data.skippedItems) {
+            setSkippedItems(response.data.skippedItems);
+        }
+
+        setBulkItems("");
+        setIsProcessing(false);
+        setMessage("Bulk operation completed successfully");
+        fetchStock();
+    };
+
+
 
     const handleOrderCheck = async () => {
         const orders = orderCheckData.split("\n").map(line => {
@@ -87,6 +114,17 @@ const App = () => {
         setIsSubmitting(false);
     };
 
+ const handleExportPDF = () => {
+        const doc = new jsPDF();
+        doc.text("Order Check Report", 14, 10);
+        doc.autoTable({
+            startY: 20,
+            head: [["Item Name", "Requested", "Available", "Balance"]],
+            body: orderReport.map(item => [item.itemName, item.requested, item.available, item.balance]),
+        });
+        doc.save("Order_Check_Report.pdf");
+    };
+
     return (
         <div className="container">
             <h1>Stock Management</h1>
@@ -115,6 +153,33 @@ const App = () => {
                 </div>
             </div>
             
+	   <div className="card">
+                <h2>Bulk Operations</h2>
+                <select value={operation} onChange={(e) => setOperation(e.target.value)}>
+                    <option value="bulk-add">Bulk Add</option>
+                    <option value="bulk-remove">Bulk Remove</option>
+                </select>
+                <textarea 
+                    placeholder="Enter items in format: Name, Quantity" 
+                    value={bulkItems} 
+                    onChange={(e) => setBulkItems(e.target.value)} 
+                />
+                <button onClick={handleBulkOperation} disabled={isProcessing}>
+                    {isProcessing ? "Processing..." : "Submit"}
+                </button>
+                {message && <p className="message">{message}</p>}
+                {skippedItems.length > 0 && (
+                    <div className="skipped-items">
+                        <h3>Skipped Items (Insufficient Stock)</h3>
+                        <ul>
+                            {skippedItems.map((item, index) => (
+                                <li key={index}>{item.itemName} - Requested: {item.quantity}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+
             <div className="card">
                 <h2>Order Check</h2>
                 <textarea 
@@ -123,7 +188,6 @@ const App = () => {
                     onChange={(e) => setOrderCheckData(e.target.value)} 
                 />
                 <button onClick={handleOrderCheck}>Check Order</button>
-
                 {orderReport.length > 0 && (
                     <>
                         <table>
@@ -146,6 +210,8 @@ const App = () => {
                                 ))}
                             </tbody>
                         </table>
+                        <button onClick={handleExportPDF}>Export to PDF</button>
+                        <button onClick={() => window.print()}>Print</button>
                         {!isOrderSubmitted && (
                             <button 
                                 className="submit-button" 
@@ -160,25 +226,30 @@ const App = () => {
                 )}
             </div>
 
+            <div className="container">
+                 
             <div className="card">
                 <h2>Stock Overview</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Item Name</th>
-                            <th>Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {stock.map(item => (
-                            <tr key={item.itemName}>
-                                <td>{item.itemName}</td>
-                                <td>{item.quantity}</td>
+                <div className="stock-overview">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Quantity</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {stock.map(item => (
+                                <tr key={item.itemName}>
+                                    <td>{item.itemName}</td>
+                                    <td>{item.quantity}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+        </div>
         </div>
     );
 };
