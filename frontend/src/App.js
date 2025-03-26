@@ -78,7 +78,6 @@ const App = () => {
 
     const handleSubmitOrder = async () => {
         if (orderReport.length === 0) {
-            console.error("❌ No orders to submit!");
             setSubmissionMessage("No valid orders to submit");
             return;
         }
@@ -86,26 +85,26 @@ const App = () => {
         setIsSubmitting(true);
         setSubmissionMessage("Submitting order...");
 
-        const validOrders = orderReport.filter(item => item.balance >= 0); // Exclude negative balance items
+        // Ensure correct format for the request
+        const validOrders = orderReport
+            .filter(item => item.balance >= 0) // Exclude negative balance items
+            .map(item => ({
+                itemName: item.itemName,
+                quantity: item.requested
+            }));
 
         if (validOrders.length === 0) {
-            console.error("❌ All items have negative balance!");
             setSubmissionMessage("All requested items have insufficient stock.");
             setIsSubmitting(false);
             return;
         }
 
-        console.log("📦 Submitting Order:", validOrders); // Debugging log
-
         try {
             const response = await axios.post(`${BACKEND_URL}/stock/submit-order`, { items: validOrders });
-
-            console.log("✅ Response from server:", response.data); // Debugging log
 
             setSubmissionMessage("Order submitted successfully");
             fetchStock(); // Refresh stock data
         } catch (error) {
-            console.error("❌ Order submission error:", error.response ? error.response.data : error);
             setSubmissionMessage("Error submitting order");
         }
 
