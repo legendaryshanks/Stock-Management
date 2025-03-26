@@ -19,6 +19,7 @@ const App = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submissionMessage, setSubmissionMessage] = useState("");
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
+    const [stockAction, setStockAction] = useState("");
 
     useEffect(() => {
         fetchStock();
