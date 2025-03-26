@@ -213,8 +213,7 @@ const App = () => {
             </div>
 
             <div className="container">
-            <h1>Stock Management</h1>
-            
+                 
             <div className="card">
                 <h2>Stock Overview</h2>
                 <div className="stock-overview">
