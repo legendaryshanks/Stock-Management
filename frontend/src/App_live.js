@@ -16,8 +16,6 @@ const App = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [message, setMessage] = useState("");
     const [skippedItems, setSkippedItems] = useState([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submissionMessage, setSubmissionMessage] = useState("");
 
     useEffect(() => {
         fetchStock();
@@ -51,7 +49,7 @@ const App = () => {
 
         const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
         const response = await axios.post(url, { items: bulkData });
-
+        
         if (response.data.skippedItems) {
             setSkippedItems(response.data.skippedItems);
         }
@@ -76,47 +74,17 @@ const App = () => {
         }
     };
 
-    const handleSubmitOrder = async () => {
-        setIsSubmitting(true);
-        setSubmissionMessage("Submitting order...");
-
-        const validOrders = orderReport.filter(item => item.balance >= 0); // Exclude negative balance items
-
-        try {
-            const response = await axios.post(`${BACKEND_URL}/stock/submit-order`, { items: validOrders });
-
-            setSubmissionMessage("Order submitted successfully");
-            fetchStock(); // Refresh stock data
-        } catch (error) {
-            setSubmissionMessage("Error submitting order");
-            console.error("Order submission error:", error);
-        }
-
-        setIsSubmitting(false);
-    };
-
     return (
         <div className="container">
             <h1>Stock Management</h1>
-
+            
             <div className="card">
                 <h2>Manage Stock</h2>
-                <input 
-                    type="text" 
-                    list="items-list" 
-                    placeholder="Select or Type Item" 
-                    value={itemName} 
-                    onChange={(e) => setItemName(e.target.value)} 
-                />
+                <input type="text" list="items-list" placeholder="Select or Type Item" value={itemName} onChange={(e) => setItemName(e.target.value)} />
                 <datalist id="items-list">
                     {items.map(item => <option key={item} value={item} />)}
                 </datalist>
-                <input 
-                    type="number" 
-                    placeholder="Quantity" 
-                    value={quantity} 
-                    onChange={(e) => setQuantity(e.target.value)} 
-                />
+                <input type="number" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
                 <div className="button-group">
                     <button onClick={() => handleStockOperation("add")}>Add Stock</button>
                     <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
@@ -129,14 +97,8 @@ const App = () => {
                     <option value="bulk-add">Bulk Add</option>
                     <option value="bulk-remove">Bulk Remove</option>
                 </select>
-                <textarea 
-                    placeholder="Enter items in format: Name, Quantity" 
-                    value={bulkItems} 
-                    onChange={(e) => setBulkItems(e.target.value)} 
-                />
-                <button onClick={handleBulkOperation} disabled={isProcessing}>
-                    {isProcessing ? "Processing..." : "Submit"}
-                </button>
+                <textarea placeholder="Enter items in format: Name, Quantity" value={bulkItems} onChange={(e) => setBulkItems(e.target.value)} />
+                <button onClick={handleBulkOperation} disabled={isProcessing}>{isProcessing ? "Processing..." : "Submit"}</button>
                 {message && <p className="message">{message}</p>}
                 {skippedItems.length > 0 && (
                     <div className="skipped-items">
@@ -152,46 +114,29 @@ const App = () => {
 
             <div className="card">
                 <h2>Order Check</h2>
-                <textarea 
-                    placeholder="Enter orders in format: Name, Quantity" 
-                    value={orderCheckData} 
-                    onChange={(e) => setOrderCheckData(e.target.value)} 
-                />
+                <textarea placeholder="Enter orders in format: Name, Quantity" value={orderCheckData} onChange={(e) => setOrderCheckData(e.target.value)} />
                 <button onClick={handleOrderCheck}>Check Order</button>
-
                 {orderReport.length > 0 && (
-                    <>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Item Name</th>
-                                    <th>Requested</th>
-                                    <th>Available</th>
-                                    <th>Balance</th>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Requested</th>
+                                <th>Available</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {orderReport.map((report, index) => (
+                                <tr key={index}>
+                                    <td>{report.itemName}</td>
+                                    <td>{report.requested}</td>
+                                    <td>{report.available}</td>
+                                    <td className={report.balance < 0 ? "negative-balance" : ""}>{report.balance}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {orderReport.map((report, index) => (
-                                    <tr key={index}>
-                                        <td>{report.itemName}</td>
-                                        <td>{report.requested}</td>
-                                        <td>{report.available}</td>
-                                        <td className={report.balance < 0 ? "negative-balance" : ""}>{report.balance}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-
-                        <button 
-                            className="submit-button" 
-                            onClick={handleSubmitOrder} 
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? "Submitting order..." : "Submit Order"}
-                        </button>
-
-                        {submissionMessage && <p className="submission-message">{submissionMessage}</p>}
-                    </>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </div>
 

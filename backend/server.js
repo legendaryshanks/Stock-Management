@@ -132,6 +132,40 @@ app.post("/stock/order-check", async (req, res) => {
     }
 });
 
+// Order Submit
+app.post("/stock/submit-order", async (req, res) => {
+    const { items } = req.body;
+
+    try {
+        const stock = await Item.find();
+        const stockMap = stock.reduce((map, item) => {
+            map[item.itemName] = item.quantity;
+            return map;
+        }, {});
+
+        const validOrders = items.filter(({ itemName, quantity }) => {
+            return stockMap[itemName] !== undefined && stockMap[itemName] >= quantity;
+        });
+
+        if (validOrders.length === 0) {
+            return res.status(400).json({ message: "No valid items to deduct" });
+        }
+
+        const bulkOperations = validOrders.map(({ itemName, quantity }) => ({
+            updateOne: {
+                filter: { itemName },
+                update: { $inc: { quantity: -quantity } },
+            },
+        }));
+
+        await Item.bulkWrite(bulkOperations);
+
+        res.json({ message: "Order submitted successfully", deductedItems: validOrders });
+    } catch (error) {
+        res.status(500).json({ message: "Error processing order submission", error });
+    }
+});
+
 app.listen(5000, () => {
     console.log("Server started on port 5000");
 });

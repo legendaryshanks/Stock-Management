@@ -169,3 +169,25 @@ tr:nth-child(even) {
     color: red;
     font-weight: bold;
 }
+.submit-button {
+    width: 100%;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+.submit-button:hover {
+    background-color: #0056b3;
+}
+
+.submission-message {
+    text-align: center;
+    font-size: 16px;
+    margin-top: 10px;
+    font-weight: bold;
+}
