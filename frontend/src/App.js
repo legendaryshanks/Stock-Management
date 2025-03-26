@@ -37,11 +37,16 @@ const App = () => {
     };
 
     const handleStockOperation = async (type) => {
-        setStockAction(type === "add" ? "Adding..." : "Removing...");
-        await axios.post(`${BACKEND_URL}/stock/${type}`);
-        setStockAction(type === "add" ? "Added Successfully" : "Removed Successfully");
-        setTimeout(() => setStockAction(""), 2000);
-        fetchStock();
+         setStockAction(type === "add" ? "Adding..." : "Removing...");
+        try {
+            await axios.post(`${BACKEND_URL}/stock/${type}`);
+            await fetchStock(); // Ensure stock is updated before resetting the button
+            setStockAction(type === "add" ? "Added Successfully" : "Removed Successfully");
+            setTimeout(() => setStockAction(""), 2000);
+        } catch (error) {
+            setStockAction("Error!");
+            setTimeout(() => setStockAction(""), 2000);
+        }
     };
 
     const handleBulkOperation = async () => {
