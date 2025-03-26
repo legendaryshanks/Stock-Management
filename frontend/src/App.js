@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
 
@@ -13,7 +13,6 @@ const App = () => {
     const [operation, setOperation] = useState("bulk-add");
     const [orderCheckData, setOrderCheckData] = useState("");
     const [orderReport, setOrderReport] = useState([]);
-    const stockContainerRef = useRef(null);
 
     useEffect(() => {
         fetchStock();
@@ -125,24 +124,22 @@ const App = () => {
 
             <div className="card">
                 <h2>Stock Overview</h2>
-                <div className="stock-container" ref={stockContainerRef} style={{ maxHeight: "400px", overflowY: "auto" }}>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Item Name</th>
-                                <th>Quantity</th>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {stock.map(item => (
+                            <tr key={item.itemName}>
+                                <td>{item.itemName}</td>
+                                <td>{item.quantity}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {stock.map(item => (
-                                <tr key={item.itemName}>
-                                    <td>{item.itemName}</td>
-                                    <td>{item.quantity}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
