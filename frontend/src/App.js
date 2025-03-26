@@ -13,8 +13,8 @@ const App = () => {
     const [operation, setOperation] = useState("bulk-add");
     const [orderCheckData, setOrderCheckData] = useState("");
     const [orderReport, setOrderReport] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [bulkMessage, setBulkMessage] = useState("");
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
         fetchStock();
@@ -37,24 +37,18 @@ const App = () => {
     };
 
     const handleBulkOperation = async () => {
-        setIsLoading(true);
-        setBulkMessage("");
-
+        setIsProcessing(true);
+        setMessage("Processing request...");
         const bulkData = bulkItems.split("\n").map(line => {
             const [name, qty] = line.split(",");
             return { itemName: name.trim(), quantity: Number(qty.trim()) };
         });
 
         const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
-        try {
-            const response = await axios.post(url, { items: bulkData });
-            setBulkMessage("Bulk operation successful!");
-        } catch (error) {
-            setBulkMessage("Error processing bulk operation. Please try again.");
-        }
-
-        setBulkItems(""); // Clear input
-        setIsLoading(false);
+        await axios.post(url, { items: bulkData });
+        setBulkItems("");
+        setIsProcessing(false);
+        setMessage("Bulk operation completed successfully");
         fetchStock();
     };
 
@@ -104,9 +98,8 @@ const App = () => {
                     <option value="bulk-remove">Bulk Remove</option>
                 </select>
                 <textarea placeholder="Enter items in format: Name, Quantity" value={bulkItems} onChange={(e) => setBulkItems(e.target.value)} />
-                <button onClick={handleBulkOperation} disabled={isLoading}>Submit</button>
-                {isLoading && <p className="loading">Processing...</p>}
-                {bulkMessage && <p className={`bulk-message ${bulkMessage.includes("successful") ? "success" : "error"}`}>{bulkMessage}</p>}
+                <button onClick={handleBulkOperation} disabled={isProcessing}>{isProcessing ? "Processing..." : "Submit"}</button>
+                {message && <p className="message">{message}</p>}
             </div>
 
             <div className="card">
@@ -135,6 +128,26 @@ const App = () => {
                         </tbody>
                     </table>
                 )}
+            </div>
+
+            <div className="card">
+                <h2>Stock Overview</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {stock.map(item => (
+                            <tr key={item.itemName}>
+                                <td>{item.itemName}</td>
+                                <td>{item.quantity}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
