@@ -154,6 +154,16 @@ const App = () => {
                     {isProcessing ? "Processing..." : "Submit"}
                 </button>
                 {message && <p className="message">{message}</p>}
+                {skippedItems.length > 0 && (
+                    <div className="skipped-items">
+                        <h3>Skipped Items (Insufficient Stock)</h3>
+                        <ul>
+                            {skippedItems.map((item, index) => (
+                                <li key={index}>{item.itemName} - Requested: {item.quantity}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
 
             <div className="card">
