@@ -18,7 +18,6 @@ const App = () => {
     const [skippedItems, setSkippedItems] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submissionMessage, setSubmissionMessage] = useState("");
-    const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
 
     useEffect(() => {
         fetchStock();
@@ -40,6 +39,29 @@ const App = () => {
         fetchStock();
     };
 
+    const handleBulkOperation = async () => {
+        setIsProcessing(true);
+        setMessage("Processing request...");
+        setSkippedItems([]);
+
+        const bulkData = bulkItems.split("\n").map(line => {
+            const [name, qty] = line.split(",");
+            return { itemName: name.trim(), quantity: Number(qty.trim()) };
+        });
+
+        const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
+        const response = await axios.post(url, { items: bulkData });
+
+        if (response.data.skippedItems) {
+            setSkippedItems(response.data.skippedItems);
+        }
+
+        setBulkItems("");
+        setIsProcessing(false);
+        setMessage("Bulk operation completed successfully");
+        fetchStock();
+    };
+
     const handleOrderCheck = async () => {
         const orders = orderCheckData.split("\n").map(line => {
             const [name, qty] = line.split(",");
@@ -49,7 +71,6 @@ const App = () => {
         try {
             const response = await axios.post(`${BACKEND_URL}/stock/order-check`, { items: orders });
             setOrderReport(response.data);
-            setIsOrderSubmitted(false);
         } catch (error) {
             console.error("Error fetching order check report:", error);
         }
@@ -64,10 +85,13 @@ const App = () => {
         setIsSubmitting(true);
         setSubmissionMessage("Submitting order...");
 
-        const validOrders = orderReport.filter(item => item.balance >= 0).map(item => ({
-            itemName: item.itemName,
-            quantity: item.requested
-        }));
+        // Ensure correct format for the request
+        const validOrders = orderReport
+            .filter(item => item.balance >= 0) // Exclude negative balance items
+            .map(item => ({
+                itemName: item.itemName,
+                quantity: item.requested
+            }));
 
         if (validOrders.length === 0) {
             setSubmissionMessage("All requested items have insufficient stock.");
@@ -76,10 +100,10 @@ const App = () => {
         }
 
         try {
-            await axios.post(`${BACKEND_URL}/stock/submit-order`, { items: validOrders });
+            const response = await axios.post(`${BACKEND_URL}/stock/submit-order`, { items: validOrders });
+
             setSubmissionMessage("Order submitted successfully");
-            setIsOrderSubmitted(true);
-            fetchStock();
+            fetchStock(); // Refresh stock data
         } catch (error) {
             setSubmissionMessage("Error submitting order");
         }
@@ -90,7 +114,7 @@ const App = () => {
     return (
         <div className="container">
             <h1>Stock Management</h1>
-            
+
             <div className="card">
                 <h2>Manage Stock</h2>
                 <input 
@@ -114,7 +138,34 @@ const App = () => {
                     <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
                 </div>
             </div>
-            
+
+            <div className="card">
+                <h2>Bulk Operations</h2>
+                <select value={operation} onChange={(e) => setOperation(e.target.value)}>
+                    <option value="bulk-add">Bulk Add</option>
+                    <option value="bulk-remove">Bulk Remove</option>
+                </select>
+                <textarea 
+                    placeholder="Enter items in format: Name, Quantity" 
+                    value={bulkItems} 
+                    onChange={(e) => setBulkItems(e.target.value)} 
+                />
+                <button onClick={handleBulkOperation} disabled={isProcessing}>
+                    {isProcessing ? "Processing..." : "Submit"}
+                </button>
+                {message && <p className="message">{message}</p>}
+                {skippedItems.length > 0 && (
+                    <div className="skipped-items">
+                        <h3>Skipped Items (Insufficient Stock)</h3>
+                        <ul>
+                            {skippedItems.map((item, index) => (
+                                <li key={index}>{item.itemName} - Requested: {item.quantity}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+
             <div className="card">
                 <h2>Order Check</h2>
                 <textarea 
@@ -146,15 +197,15 @@ const App = () => {
                                 ))}
                             </tbody>
                         </table>
-                        {!isOrderSubmitted && (
-                            <button 
-                                className="submit-button" 
-                                onClick={handleSubmitOrder} 
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? "Submitting order..." : "Submit Order"}
-                            </button>
-                        )}
+
+                        <button 
+                            className="submit-button" 
+                            onClick={handleSubmitOrder} 
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? "Submitting order..." : "Submit Order"}
+                        </button>
+
                         {submissionMessage && <p className="submission-message">{submissionMessage}</p>}
                     </>
                 )}
