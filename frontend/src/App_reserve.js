@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
 
-const BACKEND_URL = "https://stock-management-9v8g.onrender.com"; // Update if running locally
+const BACKEND_URL = "https://stock-management-9v8g.onrender.com";
 
 const App = () => {
     const [items, setItems] = useState([]);
@@ -77,36 +77,19 @@ const App = () => {
     };
 
     const handleSubmitOrder = async () => {
-        if (orderReport.length === 0) {
-            console.error("❌ No orders to submit!");
-            setSubmissionMessage("No valid orders to submit");
-            return;
-        }
-
         setIsSubmitting(true);
         setSubmissionMessage("Submitting order...");
 
         const validOrders = orderReport.filter(item => item.balance >= 0); // Exclude negative balance items
 
-        if (validOrders.length === 0) {
-            console.error("❌ All items have negative balance!");
-            setSubmissionMessage("All requested items have insufficient stock.");
-            setIsSubmitting(false);
-            return;
-        }
-
-        console.log("📦 Submitting Order:", validOrders); // Debugging log
-
         try {
             const response = await axios.post(`${BACKEND_URL}/stock/submit-order`, { items: validOrders });
-
-            console.log("✅ Response from server:", response.data); // Debugging log
 
             setSubmissionMessage("Order submitted successfully");
             fetchStock(); // Refresh stock data
         } catch (error) {
-            console.error("❌ Order submission error:", error.response ? error.response.data : error);
             setSubmissionMessage("Error submitting order");
+            console.error("Order submission error:", error);
         }
 
         setIsSubmitting(false);
@@ -155,6 +138,16 @@ const App = () => {
                     {isProcessing ? "Processing..." : "Submit"}
                 </button>
                 {message && <p className="message">{message}</p>}
+                {skippedItems.length > 0 && (
+                    <div className="skipped-items">
+                        <h3>Skipped Items (Insufficient Stock)</h3>
+                        <ul>
+                            {skippedItems.map((item, index) => (
+                                <li key={index}>{item.itemName} - Requested: {item.quantity}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
 
             <div className="card">
