@@ -40,6 +40,31 @@ const App = () => {
         fetchStock();
     };
 
+    const handleBulkOperation = async () => {
+        setIsProcessing(true);
+        setMessage("Processing request...");
+        setSkippedItems([]);
+
+        const bulkData = bulkItems.split("\n").map(line => {
+            const [name, qty] = line.split(",");
+            return { itemName: name.trim(), quantity: Number(qty.trim()) };
+        });
+
+        const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
+        const response = await axios.post(url, { items: bulkData });
+
+        if (response.data.skippedItems) {
+            setSkippedItems(response.data.skippedItems);
+        }
+
+        setBulkItems("");
+        setIsProcessing(false);
+        setMessage("Bulk operation completed successfully");
+        fetchStock();
+    };
+
+
+
     const handleOrderCheck = async () => {
         const orders = orderCheckData.split("\n").map(line => {
             const [name, qty] = line.split(",");
@@ -115,6 +140,33 @@ const App = () => {
                 </div>
             </div>
             
+	   <div className="card">
+                <h2>Bulk Operations</h2>
+                <select value={operation} onChange={(e) => setOperation(e.target.value)}>
+                    <option value="bulk-add">Bulk Add</option>
+                    <option value="bulk-remove">Bulk Remove</option>
+                </select>
+                <textarea 
+                    placeholder="Enter items in format: Name, Quantity" 
+                    value={bulkItems} 
+                    onChange={(e) => setBulkItems(e.target.value)} 
+                />
+                <button onClick={handleBulkOperation} disabled={isProcessing}>
+                    {isProcessing ? "Processing..." : "Submit"}
+                </button>
+                {message && <p className="message">{message}</p>}
+                {skippedItems.length > 0 && (
+                    <div className="skipped-items">
+                        <h3>Skipped Items (Insufficient Stock)</h3>
+                        <ul>
+                            {skippedItems.map((item, index) => (
+                                <li key={index}>{item.itemName} - Requested: {item.quantity}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+
             <div className="card">
                 <h2>Order Check</h2>
                 <textarea 
