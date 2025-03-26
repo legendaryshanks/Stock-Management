@@ -36,7 +36,10 @@ const App = () => {
     };
 
     const handleStockOperation = async (type) => {
-        await axios.post(`${BACKEND_URL}/stock/${type}`, { itemName, quantity: Number(quantity) });
+        setStockAction(type === "add" ? "Adding..." : "Removing...");
+        await axios.post(`${BACKEND_URL}/stock/${type}`);
+        setStockAction(type === "add" ? "Added Successfully" : "Removed Successfully");
+        setTimeout(() => setStockAction(""), 2000);
         fetchStock();
     };
 
@@ -182,8 +185,12 @@ const handlePrintReport = () => {
                     onChange={(e) => setQuantity(e.target.value)} 
                 />
                 <div className="button-group">
-                    <button onClick={() => handleStockOperation("add")}>Add Stock</button>
-                    <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
+                    <button onClick={() => handleStockOperation("add")} disabled={stockAction === "Adding..." || stockAction === "Removing..."}>
+                    {stockAction === "Adding..." ? "Adding..." : stockAction === "Added Successfully" ? "Added Successfully" : "Add Stock"}
+                </button>
+                <button className="red-button" onClick={() => handleStockOperation("remove")} disabled={stockAction === "Adding..." || stockAction === "Removing..."}>
+                    {stockAction === "Removing..." ? "Removing..." : stockAction === "Removed Successfully" ? "Removed Successfully" : "Remove Stock"}
+                </button>
                 </div>
             </div>
             
