@@ -136,6 +136,10 @@ app.post("/stock/order-check", async (req, res) => {
 app.post("/stock/submit-order", async (req, res) => {
     const { items } = req.body;
 
+    if (!items || items.length === 0) {
+        return res.status(400).json({ message: "No valid items to deduct" });
+    }
+
     try {
         const stock = await Item.find();
         const stockMap = stock.reduce((map, item) => {
@@ -143,6 +147,7 @@ app.post("/stock/submit-order", async (req, res) => {
             return map;
         }, {});
 
+        // Filter out items with insufficient stock
         const validOrders = items.filter(({ itemName, quantity }) => {
             return stockMap[itemName] !== undefined && stockMap[itemName] >= quantity;
         });
@@ -162,6 +167,7 @@ app.post("/stock/submit-order", async (req, res) => {
 
         res.json({ message: "Order submitted successfully", deductedItems: validOrders });
     } catch (error) {
+        console.error("Error processing order submission:", error);
         res.status(500).json({ message: "Error processing order submission", error });
     }
 });
