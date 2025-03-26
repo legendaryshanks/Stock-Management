@@ -212,25 +212,31 @@ const App = () => {
                 )}
             </div>
 
+            <div className="container">
+            <h1>Stock Management</h1>
+            
             <div className="card">
                 <h2>Stock Overview</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Item Name</th>
-                            <th>Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {stock.map(item => (
-                            <tr key={item.itemName}>
-                                <td>{item.itemName}</td>
-                                <td>{item.quantity}</td>
+                <div className="stock-overview">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Quantity</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {stock.map(item => (
+                                <tr key={item.itemName}>
+                                    <td>{item.itemName}</td>
+                                    <td>{item.quantity}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+        </div>
         </div>
     );
 };
