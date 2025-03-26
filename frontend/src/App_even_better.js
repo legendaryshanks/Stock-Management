@@ -60,14 +60,26 @@ const App = () => {
         fetchStock();
     };
 
-    const handleOrderCheck = async () => {
+    const handleOrderCheck = () => {
         const orders = orderCheckData.split("\n").map(line => {
             const [name, qty] = line.split(",");
             return { itemName: name.trim(), quantity: Number(qty.trim()) };
         });
 
-        const response = await axios.post(`${BACKEND_URL}/stock/order-check`, { items: orders });
-        setOrderReport(response.data);
+        const report = orders.map(order => {
+            const stockItem = stock.find(item => item.itemName === order.itemName);
+            if (stockItem) {
+                return {
+                    itemName: order.itemName,
+                    requested: order.quantity,
+                    available: stockItem.quantity,
+                    status: order.quantity <= stockItem.quantity ? "Available" : "Insufficient"
+                };
+            } else {
+                return { itemName: order.itemName, requested: order.quantity, available: 0, status: "Not in stock" };
+            }
+        });
+        setOrderReport(report);
     };
 
     return (

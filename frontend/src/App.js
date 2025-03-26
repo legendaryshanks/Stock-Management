@@ -60,26 +60,18 @@ const App = () => {
         fetchStock();
     };
 
-    const handleOrderCheck = () => {
+    const handleOrderCheck = async () => {
         const orders = orderCheckData.split("\n").map(line => {
             const [name, qty] = line.split(",");
             return { itemName: name.trim(), quantity: Number(qty.trim()) };
         });
 
-        const report = orders.map(order => {
-            const stockItem = stock.find(item => item.itemName === order.itemName);
-            if (stockItem) {
-                return {
-                    itemName: order.itemName,
-                    requested: order.quantity,
-                    available: stockItem.quantity,
-                    status: order.quantity <= stockItem.quantity ? "Available" : "Insufficient"
-                };
-            } else {
-                return { itemName: order.itemName, requested: order.quantity, available: 0, status: "Not in stock" };
-            }
-        });
-        setOrderReport(report);
+        try {
+            const response = await axios.post(`${BACKEND_URL}/stock/order-check`, { items: orders });
+            setOrderReport(response.data);
+        } catch (error) {
+            console.error("Error fetching order check report:", error);
+        }
     };
 
     return (
@@ -131,7 +123,7 @@ const App = () => {
                                 <th>Item Name</th>
                                 <th>Requested</th>
                                 <th>Available</th>
-                                <th>Status</th>
+                                <th>Balance</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -140,7 +132,7 @@ const App = () => {
                                     <td>{report.itemName}</td>
                                     <td>{report.requested}</td>
                                     <td>{report.available}</td>
-                                    <td className={report.status === "Available" ? "green-text" : "red-text"}>{report.status}</td>
+                                    <td className={report.balance < 0 ? "negative-balance" : ""}>{report.balance}</td>
                                 </tr>
                             ))}
                         </tbody>

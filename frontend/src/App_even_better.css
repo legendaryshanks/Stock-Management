@@ -131,9 +131,14 @@ tr:nth-child(even) {
     margin-top: 20px;
 }
 
-.order-check-results .balance {
+.order-check-results .insufficient {
+    color: red;
     font-weight: bold;
-    color: #333;
+}
+
+.order-check-results .available {
+    color: green;
+    font-weight: bold;
 }
 
 /* Skipped Items Section */

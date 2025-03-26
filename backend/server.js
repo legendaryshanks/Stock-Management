@@ -120,10 +120,10 @@ app.post("/stock/order-check", async (req, res) => {
         }, {});
 
         const report = items.map(({ itemName, quantity }) => {
-            if (!stockMap[itemName] || stockMap[itemName] < quantity) {
-                return { itemName, quantity, status: "Insufficient" };
-            }
-            return { itemName, quantity, status: "Available" };
+            const available = stockMap[itemName] || 0; 
+            const balance = available - quantity; // Calculate balance
+
+            return { itemName, requested: quantity, available, balance };
         });
 
         res.json(report);
