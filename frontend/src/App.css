@@ -72,24 +72,6 @@ button:hover {
     background-color: #c82333;
 }
 
-.loading {
-    text-align: center;
-    font-weight: bold;
-    color: #007bff;
-}
-
-.success-message {
-    color: green;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
-.error-message {
-    color: red;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
 table {
     width: 100%;
     border-collapse: collapse;
@@ -114,6 +96,7 @@ tr:nth-child(even) {
     background: #f2f2f2;
 }
 
+/* Order Check Section */
 .order-check {
     background: white;
     padding: 20px;
@@ -156,4 +139,29 @@ tr:nth-child(even) {
 .order-check-results .available {
     color: green;
     font-weight: bold;
+}
+
+/* Skipped Items Section */
+.skipped-items {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #ffe6e6;
+    border: 1px solid #ff0000;
+    border-radius: 5px;
+}
+
+.skipped-items h3 {
+    color: #b30000;
+    font-weight: bold;
+}
+
+.skipped-items ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.skipped-items li {
+    color: #b30000;
+    font-size: 14px;
+    margin: 5px 0;
 }
