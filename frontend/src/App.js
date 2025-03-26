@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 import "./App.css";
 
 const BACKEND_URL = "https://stock-management-9v8g.onrender.com"; // Update if running locally
@@ -114,17 +112,6 @@ const App = () => {
         setIsSubmitting(false);
     };
 
- const handleExportPDF = () => {
-        const doc = new jsPDF();
-        doc.text("Order Check Report", 14, 10);
-        doc.autoTable({
-            startY: 20,
-            head: [["Item Name", "Requested", "Available", "Balance"]],
-            body: orderReport.map(item => [item.itemName, item.requested, item.available, item.balance]),
-        });
-        doc.save("Order_Check_Report.pdf");
-    };
-
     return (
         <div className="container">
             <h1>Stock Management</h1>
@@ -188,6 +175,7 @@ const App = () => {
                     onChange={(e) => setOrderCheckData(e.target.value)} 
                 />
                 <button onClick={handleOrderCheck}>Check Order</button>
+
                 {orderReport.length > 0 && (
                     <>
                         <table>
@@ -210,8 +198,6 @@ const App = () => {
                                 ))}
                             </tbody>
                         </table>
-                        <button onClick={handleExportPDF}>Export to PDF</button>
-                        <button onClick={() => window.print()}>Print</button>
                         {!isOrderSubmitted && (
                             <button 
                                 className="submit-button" 

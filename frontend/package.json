@@ -19,10 +19,6 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-"dependencies":{
-"jspdf": "^2.5.1",
-"jspdf-autotable": "^3.5.25"
-},
   "eslintConfig": {
     "extends": [
       "react-app",
