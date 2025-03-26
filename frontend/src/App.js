@@ -111,6 +111,53 @@ const App = () => {
 
         setIsSubmitting(false);
     };
+const handlePrintReport = () => {
+        const newWindow = window.open("", "_blank");
+        const reportHTML = `
+            <html>
+            <head>
+                <title>Order Check Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid black; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <h2>Order Check Report</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Requested</th>
+                            <th>Available</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orderReport.map(item => `
+                            <tr>
+                                <td>${item.itemName}</td>
+                                <td>${item.requested}</td>
+                                <td>${item.available}</td>
+                                <td>${item.balance}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        window.onafterprint = function() { window.close(); };
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+        newWindow.document.write(reportHTML);
+        newWindow.document.close();
+    };
 
     return (
         <div className="container">
@@ -175,7 +222,6 @@ const App = () => {
                     onChange={(e) => setOrderCheckData(e.target.value)} 
                 />
                 <button onClick={handleOrderCheck}>Check Order</button>
-
                 {orderReport.length > 0 && (
                     <>
                         <table>
@@ -198,6 +244,7 @@ const App = () => {
                                 ))}
                             </tbody>
                         </table>
+                        <button onClick={handlePrintReport}>Print Report</button>
                         {!isOrderSubmitted && (
                             <button 
                                 className="submit-button" 
