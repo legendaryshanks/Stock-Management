@@ -15,7 +15,6 @@ const App = () => {
     const [orderReport, setOrderReport] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [message, setMessage] = useState("");
-    const [skippedItems, setSkippedItems] = useState([]);
 
     useEffect(() => {
         fetchStock();
@@ -40,20 +39,13 @@ const App = () => {
     const handleBulkOperation = async () => {
         setIsProcessing(true);
         setMessage("Processing request...");
-        setSkippedItems([]);
-
         const bulkData = bulkItems.split("\n").map(line => {
             const [name, qty] = line.split(",");
             return { itemName: name.trim(), quantity: Number(qty.trim()) };
         });
 
         const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
-        const response = await axios.post(url, { items: bulkData });
-        
-        if (response.data.skippedItems) {
-            setSkippedItems(response.data.skippedItems);
-        }
-
+        await axios.post(url, { items: bulkData });
         setBulkItems("");
         setIsProcessing(false);
         setMessage("Bulk operation completed successfully");
@@ -108,16 +100,6 @@ const App = () => {
                 <textarea placeholder="Enter items in format: Name, Quantity" value={bulkItems} onChange={(e) => setBulkItems(e.target.value)} />
                 <button onClick={handleBulkOperation} disabled={isProcessing}>{isProcessing ? "Processing..." : "Submit"}</button>
                 {message && <p className="message">{message}</p>}
-                {skippedItems.length > 0 && (
-                    <div className="skipped-items">
-                        <h3>Skipped Items (Insufficient Stock)</h3>
-                        <ul>
-                            {skippedItems.map((item, index) => (
-                                <li key={index}>{item.itemName} - Requested: {item.quantity}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
             </div>
 
             <div className="card">
