@@ -36,33 +36,10 @@ const App = () => {
         setItems(response.data);
     };
 
-      const handleStockUpdate = async (action) => {
-    if (!selectedItem || quantity <= 0) {
-      setMessage("Invalid item or quantity");
-      return;
-    }
-    setIsProcessing(true);
-    try {
-      const response = await fetch(`http://localhost:5000/stock/${action}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemName: selectedItem, quantity: parseInt(quantity) })
-      });
-      if (response.ok) {
-        setMessage(`Stock successfully ${action === "add" ? "added" : "removed"}`);
-        setSelectedItem("");
-        setQuantity("");
+    const handleStockOperation = async (type) => {
+        await axios.post(`${BACKEND_URL}/stock/${type}`, { itemName, quantity: Number(quantity) });
         fetchStock();
-      } else {
-        setMessage("Failed to update stock");
-      }
-    } catch (error) {
-      setMessage("Error updating stock");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
+    };
 
     const handleBulkOperation = async () => {
         setIsProcessing(true);
@@ -135,7 +112,8 @@ const App = () => {
 
         setIsSubmitting(false);
     };
-const handlePrintReport = () => {
+
+  const handlePrintReport = () => {
         const newWindow = window.open("", "_blank");
         const reportHTML = `
             <html>
@@ -187,28 +165,29 @@ const handlePrintReport = () => {
         <div className="container">
             <h1>Stock Management</h1>
             
-            <div>
-        <select value={selectedItem} onChange={(e) => setSelectedItem(e.target.value)}>
-          <option value="">Select Item</option>
-          {stockItems.map((item, index) => (
-            <option key={index} value={item.itemName}>{item.itemName}</option>
-          ))}
-        </select>
-        <input
-          type="number"
-          placeholder="Quantity"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-        />
-        <button onClick={() => handleStockUpdate("add")} disabled={isProcessing}>Add Stock</button>
-        <button onClick={() => handleStockUpdate("remove")} disabled={isProcessing}>Remove Stock</button>
-      </div>
-      {message && <p>{message}</p>}
-      <ul>
-        {stockItems.map((item, index) => (
-          <li key={index}>{item.itemName} - {item.quantity}</li>
-        ))}
-      </ul>
+       	    <div className="card">
+                <h2>Manage Stock</h2>
+                <input 
+                    type="text" 
+                    list="items-list" 
+                    placeholder="Select or Type Item" 
+                    value={itemName} 
+                    onChange={(e) => setItemName(e.target.value)} 
+                />
+                <datalist id="items-list">
+                    {items.map(item => <option key={item} value={item} />)}
+                </datalist>
+                <input 
+                    type="number" 
+                    placeholder="Quantity" 
+                    value={quantity} 
+                    onChange={(e) => setQuantity(e.target.value)} 
+                />
+                <div className="button-group">
+                    <button onClick={() => handleStockOperation("add")}>Add Stock</button>
+                    <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
+                </div>
+            </div>
             
 	   <div className="card">
                 <h2>Bulk Operations</h2>
