@@ -38,8 +38,13 @@ const App = () => {
     };
 
     const handleStockOperation = async (type) => {
-        await axios.post(`${BACKEND_URL}/stock/${type}`, { itemName, quantity: Number(quantity) });
-        fetchStock();
+       setIsStockButtonHidden(true);
+        try {
+            const response = await axios.post(`${BACKEND_URL}/stock/${operationType}`, { itemName, quantity });
+            setMessage(response.data.message || `${operationType === "add" ? "Added" : "Removed"} stock successfully`);
+        } catch (error) {
+            setMessage("Error processing stock operation");
+        }
     };
 
     const handleBulkOperation = async () => {
@@ -185,19 +190,15 @@ const App = () => {
                 <h2>Manage Stock</h2>
                 <input 
                     type="text" 
-                    list="items-list" 
-                    placeholder="Select or Type Item" 
+                    placeholder="Item Name" 
                     value={itemName} 
                     onChange={(e) => setItemName(e.target.value)} 
                 />
-                <datalist id="items-list">
-                    {items.map(item => <option key={item} value={item} />)}
-                </datalist>
                 <input 
                     type="number" 
                     placeholder="Quantity" 
                     value={quantity} 
-                    onChange={(e) => setQuantity(e.target.value)} 
+                    onChange={(e) => setQuantity(Number(e.target.value))} 
                 />
                 {!isStockButtonHidden && (
                     <>
@@ -205,7 +206,7 @@ const App = () => {
                         <button onClick={() => handleStockOperation("remove")}>Remove Stock</button>
                     </>
                 )}
-
+                {message && <p className="message">{message}</p>}
             </div>
 
 	   <div className="card">
