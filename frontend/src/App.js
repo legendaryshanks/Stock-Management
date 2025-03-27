@@ -20,6 +20,8 @@ const App = () => {
     const [submissionMessage, setSubmissionMessage] = useState("");
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
     const [stockAction, setStockAction] = useState("");
+    const [stockItems, setStockItems] = useState([]);
+    const [selectedItem, setSelectedItem] = useState("");
 
     useEffect(() => {
         fetchStock();
