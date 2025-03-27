@@ -51,16 +51,31 @@ const App = () => {
             return { itemName: name.trim(), quantity: Number(qty.trim()) };
         });
 
-        const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
-        const response = await axios.post(url, { items: bulkData });
+        if (operation === "bulk-add") {
+            try {
+                const response = await axios.post(`${BACKEND_URL}/stock/bulk-add`, { items: bulkData });
+                if (response.data.invalidItems && response.data.invalidItems.length > 0) {
+                    setSkippedItems(response.data.invalidItems.map(name => ({ itemName: name, quantity: 0 })));
+                    setMessage(`Bulk add completed with some invalid items: ${response.data.invalidItems.join(", ")}`);
+                } else {
+                    setMessage("Bulk add operation completed successfully");
+                }
+            } catch (error) {
+                setMessage("Error processing bulk add operation");
+            }
+        } else {
+            await axios.post(`${BACKEND_URL}/stock/bulk-remove`, { items: bulkData });
 
-        if (response.data.skippedItems) {
+             if (response.data.skippedItems) {
             setSkippedItems(response.data.skippedItems);
+            } else{
+            setMessage("Bulk operation completed successfully");
+        	}
+
         }
 
         setBulkItems("");
         setIsProcessing(false);
-        setMessage("Bulk operation completed successfully");
         fetchStock();
     };
 
