@@ -64,7 +64,7 @@ const App = () => {
                 setMessage("Error processing bulk add operation");
             }
         } else {
-            await axios.post(`${BACKEND_URL}/stock/bulk-remove`, { items: bulkData });
+             const response= await axios.post(`${BACKEND_URL}/stock/bulk-remove`, { items: bulkData });
 
              if (response.data.skippedItems) {
             setSkippedItems(response.data.skippedItems);
