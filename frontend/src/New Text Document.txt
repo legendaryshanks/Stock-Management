@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 import "./App.css";
 
 const BACKEND_URL = "https://stock-management-9v8g.onrender.com"; // Update if running locally
@@ -21,6 +19,7 @@ const App = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submissionMessage, setSubmissionMessage] = useState("");
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
+    const [stockAction, setStockAction] = useState("");
 
     useEffect(() => {
         fetchStock();
@@ -37,10 +36,33 @@ const App = () => {
         setItems(response.data);
     };
 
-    const handleStockOperation = async (type) => {
-        await axios.post(`${BACKEND_URL}/stock/${type}`, { itemName, quantity: Number(quantity) });
+      const handleStockUpdate = async (action) => {
+    if (!selectedItem || quantity <= 0) {
+      setMessage("Invalid item or quantity");
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`http://localhost:5000/stock/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemName: selectedItem, quantity: parseInt(quantity) })
+      });
+      if (response.ok) {
+        setMessage(`Stock successfully ${action === "add" ? "added" : "removed"}`);
+        setSelectedItem("");
+        setQuantity("");
         fetchStock();
-    };
+      } else {
+        setMessage("Failed to update stock");
+      }
+    } catch (error) {
+      setMessage("Error updating stock");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
 
     const handleBulkOperation = async () => {
         setIsProcessing(true);
@@ -113,45 +135,80 @@ const App = () => {
 
         setIsSubmitting(false);
     };
-
- const handleExportPDF = () => {
-        const doc = new jsPDF();
-        doc.text("Order Check Report", 14, 10);
-        doc.autoTable({
-            startY: 20,
-            head: [["Item Name", "Requested", "Available", "Balance"]],
-            body: orderReport.map(item => [item.itemName, item.requested, item.available, item.balance]),
-        });
-        doc.save("Order_Check_Report.pdf");
+const handlePrintReport = () => {
+        const newWindow = window.open("", "_blank");
+        const reportHTML = `
+            <html>
+            <head>
+                <title>Order Check Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid black; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <h2>Order Check Report</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Order</th>
+                            <th>Warehouse</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orderReport.map(item => `
+                            <tr>
+                                <td>${item.itemName}</td>
+                                <td>${item.requested}</td>
+                                <td>${item.available}</td>
+                                <td>${item.balance}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        window.onafterprint = function() { window.close(); };
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+        newWindow.document.write(reportHTML);
+        newWindow.document.close();
     };
 
     return (
         <div className="container">
             <h1>Stock Management</h1>
             
-            <div className="card">
-                <h2>Manage Stock</h2>
-                <input 
-                    type="text" 
-                    list="items-list" 
-                    placeholder="Select or Type Item" 
-                    value={itemName} 
-                    onChange={(e) => setItemName(e.target.value)} 
-                />
-                <datalist id="items-list">
-                    {items.map(item => <option key={item} value={item} />)}
-                </datalist>
-                <input 
-                    type="number" 
-                    placeholder="Quantity" 
-                    value={quantity} 
-                    onChange={(e) => setQuantity(e.target.value)} 
-                />
-                <div className="button-group">
-                    <button onClick={() => handleStockOperation("add")}>Add Stock</button>
-                    <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
-                </div>
-            </div>
+            <div>
+        <select value={selectedItem} onChange={(e) => setSelectedItem(e.target.value)}>
+          <option value="">Select Item</option>
+          {stockItems.map((item, index) => (
+            <option key={index} value={item.itemName}>{item.itemName}</option>
+          ))}
+        </select>
+        <input
+          type="number"
+          placeholder="Quantity"
+          value={quantity}
+          onChange={(e) => setQuantity(e.target.value)}
+        />
+        <button onClick={() => handleStockUpdate("add")} disabled={isProcessing}>Add Stock</button>
+        <button onClick={() => handleStockUpdate("remove")} disabled={isProcessing}>Remove Stock</button>
+      </div>
+      {message && <p>{message}</p>}
+      <ul>
+        {stockItems.map((item, index) => (
+          <li key={index}>{item.itemName} - {item.quantity}</li>
+        ))}
+      </ul>
             
 	   <div className="card">
                 <h2>Bulk Operations</h2>
@@ -194,8 +251,8 @@ const App = () => {
                             <thead>
                                 <tr>
                                     <th>Item Name</th>
-                                    <th>Requested</th>
-                                    <th>Available</th>
+                                    <th>Order</th>
+                                    <th>Warehouse</th>
                                     <th>Balance</th>
                                 </tr>
                             </thead>
@@ -210,8 +267,7 @@ const App = () => {
                                 ))}
                             </tbody>
                         </table>
-                        <button onClick={handleExportPDF}>Export to PDF</button>
-                        <button onClick={() => window.print()}>Print</button>
+                        <button onClick={handlePrintReport}>Print Report</button>
                         {!isOrderSubmitted && (
                             <button 
                                 className="submit-button" 
