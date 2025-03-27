@@ -20,8 +20,9 @@ const App = () => {
     const [submissionMessage, setSubmissionMessage] = useState("");
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
     const [stockAction, setStockAction] = useState("");
-
-    useEffect(() => {
+    const [isStockButtonHidden, setIsStockButtonHidden] = useState(false);
+    
+   useEffect(() => {
         fetchStock();
         fetchItems();
     }, []);
@@ -198,12 +199,15 @@ const App = () => {
                     value={quantity} 
                     onChange={(e) => setQuantity(e.target.value)} 
                 />
-                <div className="button-group">
-                    <button onClick={() => handleStockOperation("add")}>Add Stock</button>
-                    <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
-                </div>
+                {!isStockButtonHidden && (
+                    <>
+                        <button onClick={() => handleStockOperation("add")}>Add Stock</button>
+                        <button onClick={() => handleStockOperation("remove")}>Remove Stock</button>
+                    </>
+                )}
+
             </div>
-            
+
 	   <div className="card">
                 <h2>Bulk Operations</h2>
                 <select value={operation} onChange={(e) => setOperation(e.target.value)}>
