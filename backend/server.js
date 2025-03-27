@@ -53,19 +53,30 @@ app.post("/stock/remove", async (req, res) => {
     res.json(item);
 });
 
-// Bulk Add Stock
+// Bulk Add Stock (add only valid items, skip invalid ones)
 app.post("/stock/bulk-add", async (req, res) => {
     const { items } = req.body;
     try {
-        const bulkOperations = items.map(({ itemName, quantity }) => ({
-            updateOne: {
-                filter: { itemName },
-                update: { $inc: { quantity } },
-                upsert: true,
-            },
-        }));
-        await Item.bulkWrite(bulkOperations);
-        res.json({ message: "Bulk add successful" });
+        const existingItems = await Item.find({ itemName: { $in: items.map(i => i.itemName) } });
+        const existingItemNames = existingItems.map(item => item.itemName);
+        const validItems = items.filter(i => existingItemNames.includes(i.itemName));
+        const invalidItems = items.filter(i => !existingItemNames.includes(i.itemName)).map(i => i.itemName);
+        
+        if (validItems.length > 0) {
+            const bulkOperations = validItems.map(({ itemName, quantity }) => ({
+                updateOne: {
+                    filter: { itemName },
+                    update: { $inc: { quantity } },
+                },
+            }));
+            await Item.bulkWrite(bulkOperations);
+        }
+        
+        res.json({
+            message: "Bulk add completed with some errors", 
+            invalidItems,
+            success: validItems.length > 0
+        });
     } catch (error) {
         res.status(500).json({ message: "Error processing bulk add", error });
     }
