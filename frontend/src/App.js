@@ -139,8 +139,8 @@ const handlePrintReport = () => {
                     <thead>
                         <tr>
                             <th>Item Name</th>
-                            <th>Requested</th>
-                            <th>Available</th>
+                            <th>Order</th>
+                            <th>Warehouse</th>
                             <th>Balance</th>
                         </tr>
                     </thead>
@@ -241,8 +241,8 @@ const handlePrintReport = () => {
                             <thead>
                                 <tr>
                                     <th>Item Name</th>
-                                    <th>Requested</th>
-                                    <th>Available</th>
+                                    <th>Order</th>
+                                    <th>Warehouse</th>
                                     <th>Balance</th>
                                 </tr>
                             </thead>
