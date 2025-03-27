@@ -37,8 +37,8 @@ const App = () => {
         setItems(response.data);
     };
 
-    const handleStockOperation = async (type) => {
-       setIsStockButtonHidden(true);
+    const handleStockOperation = async (operationType) => {
+        setIsStockButtonHidden(true);
         try {
             const response = await axios.post(`${BACKEND_URL}/stock/${operationType}`, { itemName, quantity });
             setMessage(response.data.message || `${operationType === "add" ? "Added" : "Removed"} stock successfully`);
