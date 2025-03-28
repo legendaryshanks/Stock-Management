@@ -184,38 +184,63 @@ app.post("/stock/submit-order", async (req, res) => {
 });
 
 //Create new items in Bulk
+//app.post("/items/bulk-add", async (req, res) => {
+//    const { items } = req.body;
+//
+ //   if (!items || !Array.isArray(items) || items.length === 0) {
+//        return res.status(400).json({ message: "Invalid item data" });
+ //   }
+//
+   // try {
+     //   const existingItems = await db.collection("stock").find().toArray();
+       // const existingItemNames = existingItems.map(item => item.itemName);
+//
+    //    let addedItems = [];
+    //    let skippedItems = [];
+//
+    //    for (let { itemName, quantity } of items) {
+     //       if (!existingItemNames.includes(itemName)) {
+      //          await db.collection("stock").insertOne({ itemName, quantity });
+     //           addedItems.push(itemName);
+        //    } else {
+        //        skippedItems.push(itemName);
+         //   }
+      //  }
+//
+        //res.json({
+          //  message: "Bulk item addition completed.",
+          //  addedItems,
+          //  skippedItems
+       // });
+   // } catch (error) {
+   //     res.status(500).json({ message: "Error adding new items" });
+   // }
+//});
+
+
+
+// Bulk Add New Items (Create New Items)
 app.post("/items/bulk-add", async (req, res) => {
-    const { items } = req.body;
+    const items = req.body.items;
+    let bulkOperations = [];
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ message: "Invalid item data" });
-    }
-
-    try {
-        const existingItems = await db.collection("stock").find().toArray();
-        const existingItemNames = existingItems.map(item => item.itemName);
-
-        let addedItems = [];
-        let skippedItems = [];
-
-        for (let { itemName, quantity } of items) {
-            if (!existingItemNames.includes(itemName)) {
-                await db.collection("stock").insertOne({ itemName, quantity });
-                addedItems.push(itemName);
-            } else {
-                skippedItems.push(itemName);
+    for (const item of items) {
+        bulkOperations.push({
+            updateOne: {
+                filter: { itemName: item.itemName },
+                update: { $inc: { quantity: item.quantity } },
+                upsert: true // Creates new items if not present
             }
-        }
-
-        res.json({
-            message: "Bulk item addition completed.",
-            addedItems,
-            skippedItems
         });
-    } catch (error) {
-        res.status(500).json({ message: "Error adding new items" });
     }
+
+    await Item.bulkWrite(bulkOperations);
+    res.json({ message: "Bulk new items added successfully" });
 });
+
+
+
+
 
 app.listen(5000, () => {
     console.log("Server started on port 5000");

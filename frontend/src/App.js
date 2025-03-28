@@ -138,34 +138,34 @@ const App = () => {
         setIsSubmitting(false);
     };
 
-    const handleBulkNewItemAddition = async () => {
-    setIsNewItemProcessing(true);
-    setMessage("Processing bulk new item addition...");
-    setNewItemSkipped([]);
-    setIsNewItemButtonHidden(true);
+      const handleNewItemsAddition = async () => {
+        setIsNewItemProcessing(true);
+        setIsNewItemButtonHidden(true);
+        setMessage("Processing new items addition...");
+        setSkippedItems([]);
 
-    const bulkData = bulkNewItems.split("\n").map(line => {
-        const [name, qty] = line.split(",");
-        return { itemName: name.trim(), quantity: Number(qty.trim()) };
-    });
+        const newItemsData = newItems.split("\n").map(line => {
+            const [name, qty] = line.split(",");
+            return { itemName: name.trim(), quantity: Number(qty.trim()) };
+        });
 
-    try {
-        const response = await axios.post(`${BACKEND_URL}/items/bulk-add`, { items: bulkData });
-
-        if (response.data.skippedItems && response.data.skippedItems.length > 0) {
-            setNewItemSkipped(response.data.skippedItems);
-            setMessage(`Bulk add completed. Skipped items: ${response.data.skippedItems.join(", ")}`);
-        } else {
-            setMessage("Bulk new item addition completed successfully");
+        try {
+            const response = await axios.post(`${BACKEND_URL}/items/bulk-add`, { items: newItemsData });
+            if (response.data.invalidItems && response.data.invalidItems.length > 0) {
+                setSkippedItems(response.data.invalidItems.map(name => ({ itemName: name, quantity: 0 })));
+                setMessage(`Bulk new items added. Skipped invalid items: ${response.data.invalidItems.join(", ")}`);
+            } else {
+                setMessage("Bulk new items added successfully");
+            }
+        } catch (error) {
+            setMessage("Error adding new items");
         }
-    } catch (error) {
-        setMessage("Error adding new items");
-    }
 
-    setBulkNewItems("");
-    setIsNewItemProcessing(false);
-    fetchItems();
-   };
+        setNewItems("");
+        setIsNewItemProcessing(false);
+        fetchItems();
+    };
+
 
   const handlePrintReport = () => {
         const newWindow = window.open("", "_blank");
