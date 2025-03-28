@@ -141,7 +141,7 @@ const App = () => {
         setIsSubmitting(false);
     };
 
-      const handleNewItemsAddition = async () => {
+   const handleNewItemsAddition = async () => {
         setIsNewItemProcessing(true);
         setIsNewItemButtonHidden(true);
         setMessage("Processing new items addition...");
