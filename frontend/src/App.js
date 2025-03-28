@@ -110,6 +110,10 @@ const App = () => {
     };
 
     const handleSubmitOrder = async () => {
+
+       const confirmSubmit = window.confirm("This will submit order and adjust stock. Sure?");
+       if (!confirmSubmit) return; // Stop if the user cancels
+
         if (orderReport.length === 0) {
             setSubmissionMessage("No valid orders to submit");
             return;
