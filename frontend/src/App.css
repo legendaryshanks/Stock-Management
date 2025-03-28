@@ -192,7 +192,7 @@ tr:nth-child(even) {
     font-weight: bold;
 }
 .stock-overview {
-    max-height: 1000px; /* Adjust height as needed */
+    max-height: 800px; /* Adjust height as needed */
     overflow-y: auto;
     border: 1px solid #ddd;
     padding: 10px;
