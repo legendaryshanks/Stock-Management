@@ -141,7 +141,7 @@ const App = () => {
         setIsSubmitting(false);
     };
 
-   const handleNewItemsAddition = async () => {
+      const handleNewItemsAddition = async () => {
         setIsNewItemProcessing(true);
         setIsNewItemButtonHidden(true);
         setMessage("Processing new items addition...");
@@ -166,9 +166,8 @@ const App = () => {
 
         setNewItems("");
         setIsNewItemProcessing(false);
-        fetchItems();
-    };
-
+        fetchStock();
+   };
 
   const handlePrintReport = () => {
         const newWindow = window.open("", "_blank");
