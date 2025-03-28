@@ -183,29 +183,39 @@ app.post("/stock/submit-order", async (req, res) => {
     }
 });
 
-// Create new items
-app.post("/items/add", async (req, res) => {
-    const { itemName, quantity } = req.body;
+//Create new items in Bulk
+app.post("/items/bulk-add", async (req, res) => {
+    const { items } = req.body;
 
-    if (!itemName || quantity < 0) {
+    if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: "Invalid item data" });
     }
 
     try {
-        const existingItem = await db.collection("stock").findOne({ itemName });
+        const existingItems = await db.collection("stock").find().toArray();
+        const existingItemNames = existingItems.map(item => item.itemName);
 
-        if (existingItem) {
-            return res.status(400).json({ message: `Item '${itemName}' already exists in the system.` });
+        let addedItems = [];
+        let skippedItems = [];
+
+        for (let { itemName, quantity } of items) {
+            if (!existingItemNames.includes(itemName)) {
+                await db.collection("stock").insertOne({ itemName, quantity });
+                addedItems.push(itemName);
+            } else {
+                skippedItems.push(itemName);
+            }
         }
 
-        await db.collection("stock").insertOne({ itemName, quantity });
-
-        return res.json({ message: `Item '${itemName}' added successfully!` });
+        res.json({
+            message: "Bulk item addition completed.",
+            addedItems,
+            skippedItems
+        });
     } catch (error) {
-        return res.status(500).json({ message: "Error adding new item" });
+        res.status(500).json({ message: "Error adding new items" });
     }
 });
-
 
 app.listen(5000, () => {
     console.log("Server started on port 5000");

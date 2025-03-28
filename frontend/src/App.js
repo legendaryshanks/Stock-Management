@@ -21,10 +21,10 @@ const App = () => {
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
     const [stockAction, setStockAction] = useState("");
     const [isStockButtonHidden, setIsStockButtonHidden] = useState(false);
-    const [newItemName, setNewItemName] = useState("");
-    const [newItemQuantity, setNewItemQuantity] = useState(0);
+    const [bulkNewItems, setBulkNewItems] = useState("");
     const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
     const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
+    const [newItemSkipped, setNewItemSkipped] = useState([]);
     
    useEffect(() => {
         fetchStock();
@@ -138,26 +138,34 @@ const App = () => {
         setIsSubmitting(false);
     };
 
-    const handleNewItemAddition = async () => {
-        setIsNewItemProcessing(true);
-        setIsNewItemButtonHidden(true);
-        setMessage("Processing new item addition...");
+    const handleBulkNewItemAddition = async () => {
+    setIsNewItemProcessing(true);
+    setMessage("Processing bulk new item addition...");
+    setNewItemSkipped([]);
+    setIsNewItemButtonHidden(true);
 
-        try {
-            const response = await axios.post(`${BACKEND_URL}/items/add`, {
-                itemName: newItemName.trim(),
-                quantity: newItemQuantity
-            });
-            setMessage(response.data.message);
-        } catch (error) {
-            setMessage("Error adding new item");
+    const bulkData = bulkNewItems.split("\n").map(line => {
+        const [name, qty] = line.split(",");
+        return { itemName: name.trim(), quantity: Number(qty.trim()) };
+    });
+
+    try {
+        const response = await axios.post(`${BACKEND_URL}/items/bulk-add`, { items: bulkData });
+
+        if (response.data.skippedItems && response.data.skippedItems.length > 0) {
+            setNewItemSkipped(response.data.skippedItems);
+            setMessage(`Bulk add completed. Skipped items: ${response.data.skippedItems.join(", ")}`);
+        } else {
+            setMessage("Bulk new item addition completed successfully");
         }
+    } catch (error) {
+        setMessage("Error adding new items");
+    }
 
-        setNewItemName("");
-        setNewItemQuantity(0);
-        setIsNewItemProcessing(false);
-        fetchItems();
-    };
+    setBulkNewItems("");
+    setIsNewItemProcessing(false);
+    fetchItems();
+   };
 
   const handlePrintReport = () => {
         const newWindow = window.open("", "_blank");
@@ -331,25 +339,29 @@ const App = () => {
             </div>
         </div>
             <div className="card">
-                <h2>Add New Items</h2>
-                <input 
-                    type="text" 
-                    placeholder="Item Name" 
-                    value={newItemName} 
-                    onChange={(e) => setNewItemName(e.target.value)} 
-                />
-                <input 
-                    type="number" 
-                    placeholder="Initial Quantity" 
-                    value={newItemQuantity} 
-                    onChange={(e) => setNewItemQuantity(Number(e.target.value))} 
-                />
-                {!isNewItemButtonHidden && (
-                    <button onClick={handleNewItemAddition} disabled={isNewItemProcessing}>
-                        {isNewItemProcessing ? "Processing..." : "Add Item"}
-                    </button>
-                )}
-            </div>
+            <h2>Bulk Add New Items</h2>
+    		<textarea
+        		placeholder="Enter new items in format: Name, Quantity"
+       			 value={bulkNewItems}
+       			 onChange={(e) => setBulkNewItems(e.target.value)}
+   			 />
+    		{!isNewItemButtonHidden && (
+        	<button onClick={handleBulkNewItemAddition} disabled={isNewItemProcessing}>
+            	{isNewItemProcessing ? "Processing..." : "Submit"}
+        	</button>
+    			)}
+    		{message && <p className="message">{message}</p>}
+    		{newItemSkipped.length > 0 && (
+        	<div className="skipped-items">
+            	<h3>Skipped Items (Already Exist)</h3>
+            	<ul>
+                	{newItemSkipped.map((item, index) => (
+                    <li key={index}>{item}</li>
+               	 ))}
+            	</ul>
+        	</div>
+    	)}
+	</div>
         </div>
     );
 };
