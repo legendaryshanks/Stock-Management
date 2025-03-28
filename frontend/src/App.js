@@ -21,10 +21,13 @@ const App = () => {
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
     const [stockAction, setStockAction] = useState("");
     const [isStockButtonHidden, setIsStockButtonHidden] = useState(false);
-    const [bulkNewItems, setBulkNewItems] = useState("");
+   // const [bulkNewItems, setBulkNewItems] = useState("");
+   // const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
+   // const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
+   // const [newItemSkipped, setNewItemSkipped] = useState([]);
+    const [newItems, setNewItems] = useState("");
     const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
     const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
-    const [newItemSkipped, setNewItemSkipped] = useState([]);
     
    useEffect(() => {
         fetchStock();
@@ -339,29 +342,18 @@ const App = () => {
             </div>
         </div>
             <div className="card">
-            <h2>Bulk Add New Items</h2>
-    		<textarea
-        		placeholder="Enter new items in format: Name, Quantity"
-       			 value={bulkNewItems}
-       			 onChange={(e) => setBulkNewItems(e.target.value)}
-   			 />
-    		{!isNewItemButtonHidden && (
-        	<button onClick={handleBulkNewItemAddition} disabled={isNewItemProcessing}>
-            	{isNewItemProcessing ? "Processing..." : "Submit"}
-        	</button>
-    			)}
-    		{message && <p className="message">{message}</p>}
-    		{newItemSkipped.length > 0 && (
-        	<div className="skipped-items">
-            	<h3>Skipped Items (Already Exist)</h3>
-            	<ul>
-                	{newItemSkipped.map((item, index) => (
-                    <li key={index}>{item}</li>
-               	 ))}
-            	</ul>
-        	</div>
-    	)}
-	</div>
+                <h2>Add New Items</h2>
+                <textarea 
+                    placeholder="Enter new items in format: Name, Quantity" 
+                    value={newItems} 
+                    onChange={(e) => setNewItems(e.target.value)} 
+                />
+                {!isNewItemButtonHidden && (
+                    <button onClick={handleNewItemsAddition} disabled={isNewItemProcessing}>
+                        {isNewItemProcessing ? "Processing..." : "Add New Items"}
+                    </button>
+                )}
+            </div>
         </div>
     );
 };
