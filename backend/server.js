@@ -183,6 +183,30 @@ app.post("/stock/submit-order", async (req, res) => {
     }
 });
 
+// Create new items
+app.post("/items/add", async (req, res) => {
+    const { itemName, quantity } = req.body;
+
+    if (!itemName || quantity < 0) {
+        return res.status(400).json({ message: "Invalid item data" });
+    }
+
+    try {
+        const existingItem = await db.collection("stock").findOne({ itemName });
+
+        if (existingItem) {
+            return res.status(400).json({ message: `Item '${itemName}' already exists in the system.` });
+        }
+
+        await db.collection("stock").insertOne({ itemName, quantity });
+
+        return res.json({ message: `Item '${itemName}' added successfully!` });
+    } catch (error) {
+        return res.status(500).json({ message: "Error adding new item" });
+    }
+});
+
+
 app.listen(5000, () => {
     console.log("Server started on port 5000");
 });

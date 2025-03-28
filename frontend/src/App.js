@@ -21,6 +21,10 @@ const App = () => {
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
     const [stockAction, setStockAction] = useState("");
     const [isStockButtonHidden, setIsStockButtonHidden] = useState(false);
+    const [newItemName, setNewItemName] = useState("");
+    const [newItemQuantity, setNewItemQuantity] = useState(0);
+    const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
+    const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
     
    useEffect(() => {
         fetchStock();
@@ -132,6 +136,27 @@ const App = () => {
         }
 
         setIsSubmitting(false);
+    };
+
+    const handleNewItemAddition = async () => {
+        setIsNewItemProcessing(true);
+        setIsNewItemButtonHidden(true);
+        setMessage("Processing new item addition...");
+
+        try {
+            const response = await axios.post(`${BACKEND_URL}/items/add`, {
+                itemName: newItemName.trim(),
+                quantity: newItemQuantity
+            });
+            setMessage(response.data.message);
+        } catch (error) {
+            setMessage("Error adding new item");
+        }
+
+        setNewItemName("");
+        setNewItemQuantity(0);
+        setIsNewItemProcessing(false);
+        fetchItems();
     };
 
   const handlePrintReport = () => {
@@ -305,6 +330,26 @@ const App = () => {
                 </div>
             </div>
         </div>
+            <div className="card">
+                <h2>Add New Items</h2>
+                <input 
+                    type="text" 
+                    placeholder="Item Name" 
+                    value={newItemName} 
+                    onChange={(e) => setNewItemName(e.target.value)} 
+                />
+                <input 
+                    type="number" 
+                    placeholder="Initial Quantity" 
+                    value={newItemQuantity} 
+                    onChange={(e) => setNewItemQuantity(Number(e.target.value))} 
+                />
+                {!isNewItemButtonHidden && (
+                    <button onClick={handleNewItemAddition} disabled={isNewItemProcessing}>
+                        {isNewItemProcessing ? "Processing..." : "Add Item"}
+                    </button>
+                )}
+            </div>
         </div>
     );
 };
