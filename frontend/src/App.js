@@ -221,6 +221,31 @@ const App = () => {
         newWindow.document.close();
     };
 
+const exportToCSV = () => {
+    if (stock.length === 0) {
+        alert("No stock data available to export.");
+        return;
+    }
+
+    // CSV headers
+    const headers = ["Item Name,Quantity"];
+    
+    // Convert stock data to CSV format efficiently
+    const rows = stock.map(item => `${item.itemName},${item.quantity}`);
+    
+    // Combine headers and rows with a single join operation (faster)
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
+
+    // Create and trigger the download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.href = encodedUri;
+    link.download = "stock_data.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
     return (
         <div className="container">
             <h1>Stock Management</h1>
@@ -324,6 +349,10 @@ const App = () => {
                  
             <div className="card">
                 <h2>Stock Overview</h2>
+ 		{/* Export Button */}
+       		 <button onClick={exportToCSV} style={{ marginBottom: "10px" }}>
+            		Export to CSV
+        	</button>
                 <div className="stock-overview">
                     <table>
                         <thead>
