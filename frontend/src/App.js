@@ -65,6 +65,8 @@ const App = () => {
         });
 
         if (operation === "bulk-add") {
+             const confirmSubmit = window.confirm("This will add items to the stock. Sure to proceed?");
+             if (!confirmSubmit) return; // Stop if the user cancels
             try {
                 const response = await axios.post(`${BACKEND_URL}/stock/bulk-add`, { items: bulkData });
                 if (response.data.invalidItems && response.data.invalidItems.length > 0) {
@@ -77,6 +79,8 @@ const App = () => {
                 setMessage("Error processing bulk add operation");
             }
         } else {
+             const confirmSubmit = window.confirm("This will remove items from stock. Sure to proceed?");
+             if (!confirmSubmit) return; // Stop if the user cancels
              const response= await axios.post(`${BACKEND_URL}/stock/bulk-remove`, { items: bulkData });
 
              if (response.data.skippedItems) {
@@ -146,6 +150,10 @@ const App = () => {
     };
 
       const handleNewItemsAddition = async () => {
+             
+        const confirmSubmit = window.confirm("This will create new items in the system and increase the stock. Sure?");
+        if (!confirmSubmit) return; // Stop if the user cancels
+            
         setIsNewItemProcessing(true);
         setIsNewItemButtonHidden(true);
         setMessage("Processing new items addition...");
