@@ -54,33 +54,6 @@ const App = () => {
         }
     };
 
-
-    const StockOverview = () => {
-    	const [searchQuery, setSearchQuery] = useState("");
-    	const [stock, setStock] = useState([]);
-    	const [loading, setLoading] = useState(false);
-
-    	// Fetch stock data from API whenever searchQuery changes
-    	useEffect(() => {
-        if (searchQuery.trim() === "") {
-            setStock([]); // Clear results if search box is empty
-            return;
-        }
-
-        setLoading(true); // Show loading state
-        fetch(`http://localhost:5000/stock/search?query=${searchQuery}`)
-            .then(res => res.json())
-            .then(data => {
-                setStock(data);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.error("Error fetching stock:", error);
-                setLoading(false);
-            });
-
-    	}, [searchQuery]); // Runs whenever searchQuery changes
-
     const handleBulkOperation = async () => {
         setIsProcessing(true);
         setMessage("Processing request...");
@@ -421,23 +394,6 @@ const exportToCSV = () => {
                     </button>
                 )}
             </div>
-
-	<div>
-            <h2>Stock Overview</h2>
-            <input
-                type="text"
-                placeholder="Search for an item..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ padding: "8px", marginBottom: "10px", width: "100%" }}
-            />
-            {loading && <p>Loading...</p>}
-            <ul>
-                {stock.map((item) => (
-                    <li key={item._id}>{item.itemName} - {item.quantity}</li>
-                ))}
-            </ul>
-        </div>
         </div>
     );
 };

@@ -20,8 +20,16 @@ const App = () => {
     const [submissionMessage, setSubmissionMessage] = useState("");
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
     const [stockAction, setStockAction] = useState("");
-
-    useEffect(() => {
+    const [isStockButtonHidden, setIsStockButtonHidden] = useState(false);
+   // const [bulkNewItems, setBulkNewItems] = useState("");
+   // const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
+   // const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
+   // const [newItemSkipped, setNewItemSkipped] = useState([]);
+    const [newItems, setNewItems] = useState("");
+    const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
+    const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
+    
+   useEffect(() => {
         fetchStock();
         fetchItems();
     }, []);
@@ -36,10 +44,42 @@ const App = () => {
         setItems(response.data);
     };
 
-    const handleStockOperation = async (type) => {
-        await axios.post(`${BACKEND_URL}/stock/${type}`, { itemName, quantity: Number(quantity) });
-        fetchStock();
+    const handleStockOperation = async (operationType) => {
+        setIsStockButtonHidden(true);
+        try {
+            const response = await axios.post(`${BACKEND_URL}/stock/${operationType}`, { itemName, quantity });
+            setMessage(response.data.message || `${operationType === "add" ? "Added" : "Removed"} stock successfully`);
+        } catch (error) {
+            setMessage("Error processing stock operation");
+        }
     };
+
+
+    const StockOverview = () => {
+    	const [searchQuery, setSearchQuery] = useState("");
+    	const [stock, setStock] = useState([]);
+    	const [loading, setLoading] = useState(false);
+
+    	// Fetch stock data from API whenever searchQuery changes
+    	useEffect(() => {
+        if (searchQuery.trim() === "") {
+            setStock([]); // Clear results if search box is empty
+            return;
+        }
+
+        setLoading(true); // Show loading state
+        fetch(`http://localhost:5000/stock/search?query=${searchQuery}`)
+            .then(res => res.json())
+            .then(data => {
+                setStock(data);
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error("Error fetching stock:", error);
+                setLoading(false);
+            });
+
+    	}, [searchQuery]); // Runs whenever searchQuery changes
 
     const handleBulkOperation = async () => {
         setIsProcessing(true);
@@ -51,16 +91,35 @@ const App = () => {
             return { itemName: name.trim(), quantity: Number(qty.trim()) };
         });
 
-        const url = operation === "bulk-add" ? `${BACKEND_URL}/stock/bulk-add` : `${BACKEND_URL}/stock/bulk-remove`;
-        const response = await axios.post(url, { items: bulkData });
+        if (operation === "bulk-add") {
+             const confirmSubmit = window.confirm("This will add items to the stock. Sure to proceed?");
+             if (!confirmSubmit) return; // Stop if the user cancels
+            try {
+                const response = await axios.post(`${BACKEND_URL}/stock/bulk-add`, { items: bulkData });
+                if (response.data.invalidItems && response.data.invalidItems.length > 0) {
+                    setSkippedItems(response.data.invalidItems.map(name => ({ itemName: name, quantity: 0 })));
+                    setMessage(`Bulk add completed with some invalid items: ${response.data.invalidItems.join(", ")}`);
+                } else {
+                    setMessage("Bulk add operation completed successfully");
+                }
+            } catch (error) {
+                setMessage("Error processing bulk add operation");
+            }
+        } else {
+             const confirmSubmit = window.confirm("This will remove items from stock. Sure to proceed?");
+             if (!confirmSubmit) return; // Stop if the user cancels
+             const response= await axios.post(`${BACKEND_URL}/stock/bulk-remove`, { items: bulkData });
 
-        if (response.data.skippedItems) {
+             if (response.data.skippedItems) {
             setSkippedItems(response.data.skippedItems);
+            } else{
+            setMessage("Bulk operation completed successfully");
+        	}
+
         }
 
         setBulkItems("");
         setIsProcessing(false);
-        setMessage("Bulk operation completed successfully");
         fetchStock();
     };
 
@@ -82,6 +141,10 @@ const App = () => {
     };
 
     const handleSubmitOrder = async () => {
+
+       const confirmSubmit = window.confirm("This will submit order and adjust stock. Sure?");
+       if (!confirmSubmit) return; // Stop if the user cancels
+
         if (orderReport.length === 0) {
             setSubmissionMessage("No valid orders to submit");
             return;
@@ -112,6 +175,38 @@ const App = () => {
 
         setIsSubmitting(false);
     };
+
+      const handleNewItemsAddition = async () => {
+             
+        const confirmSubmit = window.confirm("This will create new items in the system and increase the stock. Sure?");
+        if (!confirmSubmit) return; // Stop if the user cancels
+            
+        setIsNewItemProcessing(true);
+        setIsNewItemButtonHidden(true);
+        setMessage("Processing new items addition...");
+        setSkippedItems([]);
+
+        const newItemsData = newItems.split("\n").map(line => {
+            const [name, qty] = line.split(",");
+            return { itemName: name.trim(), quantity: Number(qty.trim()) };
+        });
+
+        try {
+            const response = await axios.post(`${BACKEND_URL}/items/bulk-add`, { items: newItemsData });
+            if (response.data.invalidItems && response.data.invalidItems.length > 0) {
+                setSkippedItems(response.data.invalidItems.map(name => ({ itemName: name, quantity: 0 })));
+                setMessage(`Bulk new items added. Skipped invalid items: ${response.data.invalidItems.join(", ")}`);
+            } else {
+                setMessage("Bulk new items added successfully");
+            }
+        } catch (error) {
+            setMessage("Error adding new items");
+        }
+
+        setNewItems("");
+        setIsNewItemProcessing(false);
+        fetchStock();
+   };
 
   const handlePrintReport = () => {
         const newWindow = window.open("", "_blank");
@@ -161,6 +256,31 @@ const App = () => {
         newWindow.document.close();
     };
 
+const exportToCSV = () => {
+    if (stock.length === 0) {
+        alert("No stock data available to export.");
+        return;
+    }
+
+    // CSV headers
+    const headers = ["Item Name,Quantity"];
+    
+    // Convert stock data to CSV format efficiently
+    const rows = stock.map(item => `${item.itemName},${item.quantity}`);
+    
+    // Combine headers and rows with a single join operation (faster)
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
+
+    // Create and trigger the download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.href = encodedUri;
+    link.download = "stock_data.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
     return (
         <div className="container">
             <h1>Stock Management</h1>
@@ -169,26 +289,25 @@ const App = () => {
                 <h2>Manage Stock</h2>
                 <input 
                     type="text" 
-                    list="items-list" 
-                    placeholder="Select or Type Item" 
+                    placeholder="Item Name" 
                     value={itemName} 
                     onChange={(e) => setItemName(e.target.value)} 
                 />
-                <datalist id="items-list">
-                    {items.map(item => <option key={item} value={item} />)}
-                </datalist>
                 <input 
                     type="number" 
                     placeholder="Quantity" 
                     value={quantity} 
-                    onChange={(e) => setQuantity(e.target.value)} 
+                    onChange={(e) => setQuantity(Number(e.target.value))} 
                 />
-                <div className="button-group">
-                    <button onClick={() => handleStockOperation("add")}>Add Stock</button>
-                    <button className="red-button" onClick={() => handleStockOperation("remove")}>Remove Stock</button>
-                </div>
+                {!isStockButtonHidden && (
+                    <>
+                        <button onClick={() => handleStockOperation("add")}>Add Stock</button>
+                        <button onClick={() => handleStockOperation("remove")}>Remove Stock</button>
+                    </>
+                )}
+                {message && <p className="message">{message}</p>}
             </div>
-            
+
 	   <div className="card">
                 <h2>Bulk Operations</h2>
                 <select value={operation} onChange={(e) => setOperation(e.target.value)}>
@@ -265,6 +384,10 @@ const App = () => {
                  
             <div className="card">
                 <h2>Stock Overview</h2>
+ 		{/* Export Button */}
+       		 <button onClick={exportToCSV} style={{ marginBottom: "10px" }}>
+            		Export to CSV
+        	</button>
                 <div className="stock-overview">
                     <table>
                         <thead>
@@ -284,6 +407,36 @@ const App = () => {
                     </table>
                 </div>
             </div>
+        </div>
+            <div className="card">
+                <h2>Add New Items</h2>
+                <textarea 
+                    placeholder="Enter new items in format: Name, Quantity" 
+                    value={newItems} 
+                    onChange={(e) => setNewItems(e.target.value)} 
+                />
+                {!isNewItemButtonHidden && (
+                    <button onClick={handleNewItemsAddition} disabled={isNewItemProcessing}>
+                        {isNewItemProcessing ? "Processing..." : "Add New Items"}
+                    </button>
+                )}
+            </div>
+
+	<div>
+            <h2>Stock Overview</h2>
+            <input
+                type="text"
+                placeholder="Search for an item..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ padding: "8px", marginBottom: "10px", width: "100%" }}
+            />
+            {loading && <p>Loading...</p>}
+            <ul>
+                {stock.map((item) => (
+                    <li key={item._id}>{item.itemName} - {item.quantity}</li>
+                ))}
+            </ul>
         </div>
         </div>
     );

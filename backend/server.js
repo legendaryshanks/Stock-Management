@@ -24,11 +24,25 @@ app.get("/items", async (req, res) => {
     res.json(items.map(item => item.itemName));
 });
 
-// Fetch stock details
+// Fetch stock details- used in stock overview section
 app.get("/stock", async (req, res) => {
     const stock = await Item.find().select("itemName quantity");
     res.json(stock);
 });
+
+// To search items dynamically
+app.get("/stock/search", async (req, res) => {
+    const { query } = req.query;
+    try {
+        const stock = await Item.find({ $text: { $search: query } }) // 🔥 Fast search
+            .select("itemName quantity")
+            .limit(20); // Prevent large responses
+        res.json(stock);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching stock", error });
+    }
+});
+
 
 // Add stock
 app.post("/stock/add", async (req, res) => {
