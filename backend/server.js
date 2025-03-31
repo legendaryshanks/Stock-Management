@@ -26,7 +26,7 @@ app.get("/items", async (req, res) => {
 
 // Fetch stock details
 app.get("/stock", async (req, res) => {
-    const stock = await Item.find();
+    const stock = await Item.find().select("itemName quantity");
     res.json(stock);
 });
 
