@@ -68,7 +68,7 @@ const App = () => {
         }
 
         setLoading(true); // Show loading state
-        fetch(`http://localhost:5000/stock/search?query=${searchQuery}`)
+        fetch(`${BACKEND_URL}/stock/search?query=${searchQuery}`)
             .then(res => res.json())
             .then(data => {
                 setStock(data);
@@ -80,6 +80,8 @@ const App = () => {
             });
 
     	}, [searchQuery]); // Runs whenever searchQuery changes
+
+      };
 
     const handleBulkOperation = async () => {
         setIsProcessing(true);
