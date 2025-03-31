@@ -28,6 +28,9 @@ const App = () => {
     const [newItems, setNewItems] = useState("");
     const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
     const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
+    	const [searchQuery, setSearchQuery] = useState("");
+    	const [stock, setStock] = useState([]);
+    	const [loading, setLoading] = useState(false);
     
    useEffect(() => {
         fetchStock();
@@ -56,9 +59,6 @@ const App = () => {
 
 
     const StockOverview = () => {
-    	const [searchQuery, setSearchQuery] = useState("");
-    	const [stock, setStock] = useState([]);
-    	const [loading, setLoading] = useState(false);
 
     	// Fetch stock data from API whenever searchQuery changes
     	useEffect(() => {
