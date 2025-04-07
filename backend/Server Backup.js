@@ -18,19 +18,6 @@ const itemSchema = new mongoose.Schema({
 
 const Item = mongoose.model("Item", itemSchema);
 
-
-// Get stock for a specific item
-app.get("/stock/:itemName", async (req, res) => {
-    const { itemName } = req.params;
-    try {
-        const item = await Item.findOne({ itemName });
-        if (!item) return res.status(404).json({ message: "Item not found" });
-        res.json({ itemName: item.itemName, quantity: item.quantity });
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching item stock", error });
-    }
-});
-
 // Fetch all items
 app.get("/items", async (req, res) => {
     const items = await Item.find({}, "itemName");

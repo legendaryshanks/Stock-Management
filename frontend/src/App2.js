@@ -21,35 +21,18 @@ const App = () => {
     const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
     const [stockAction, setStockAction] = useState("");
     const [isStockButtonHidden, setIsStockButtonHidden] = useState(false);
-   // const [bulkNewItems, setBulkNewItems] = useState("");
-   // const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
-   // const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
-   // const [newItemSkipped, setNewItemSkipped] = useState([]);
+    // const [bulkNewItems, setBulkNewItems] = useState("");
+    // const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
+    // const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
+    // const [newItemSkipped, setNewItemSkipped] = useState([]);
     const [newItems, setNewItems] = useState("");
     const [isNewItemProcessing, setIsNewItemProcessing] = useState(false);
     const [isNewItemButtonHidden, setIsNewItemButtonHidden] = useState(false);
-    const [viewedStock, setViewedStock] = useState(null);
-    const [showDropdown, setShowDropdown] = useState(false);	
-
     
    useEffect(() => {
         fetchStock();
         fetchItems();
     }, []);
-
-
-    const handleSelectItem = async (name) => {
-    setItemName(name);
-    setShowDropdown(false);
-
-    try {
-        const response = await axios.get(`${BACKEND_URL}/stock/${name}`);
-        setViewedStock(response.data);
-    } catch (error) {
-        setViewedStock(null);
-        setMessage("Error fetching stock for selected item.");
-    }
-    };
 
     const fetchStock = async () => {
         const response = await axios.get(`${BACKEND_URL}/stock`);
@@ -71,7 +54,40 @@ const App = () => {
         }
     };
 
-    const handleBulkOperation = async () => {
+
+  //const StockSearchDropdown = () => {
+  //const [query, setQuery] = useState('');
+ // const [options, setOptions] = useState([]);
+ // const [selectedItem, setSelectedItem] = useState('');
+
+  //const handleInputChange = async (event) => {
+   // const queryText = event.target.value;
+    //setQuery(queryText);
+
+    //if (queryText.length > 2) { // Wait until the user types at least 3 characters
+     // try {
+      //  const response = await axios.get('http://localhost:5000/stock/search', {
+      //    params: { query: queryText },
+        //});
+       // setOptions(response.data); // Populate the dropdown with the fetched data
+      //} catch (error) {
+      //  console.error('Error fetching stock items:', error);
+     // }
+    //} else {
+     // setOptions([]); // Clear the dropdown if the query is too short
+   // }
+  //};
+
+   //const handleSelectItem = (item) => {
+   // setSelectedItem(item);
+   // setQuery(item); // Optionally, set the input field to the selected item
+   // setOptions([]); // Clear dropdown after selection
+  //};
+
+
+	
+
+      const handleBulkOperation = async () => {
         setIsProcessing(true);
         setMessage("Processing request...");
         setSkippedItems([]);
@@ -276,38 +292,28 @@ const exportToCSV = () => {
             <h1>Stock Management</h1>
             
        	    <div className="card">
-    <h2>View Stock</h2>
-    <input
-        type="text"
-        placeholder="Search Item"
-        value={itemName}
-        onChange={(e) => {
-            setItemName(e.target.value);
-            setShowDropdown(true);
-        }}
-        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-    />
-    {showDropdown && itemName.length > 0 && (
-        <ul className="dropdown">
-            {items
-                .filter(name => name.toLowerCase().includes(itemName.toLowerCase()))
-                .map((name, idx) => (
-                    <li
-                        key={idx}
-                        onClick={() => handleSelectItem(name)}
-                    >
-                        {name}
-                    </li>
-                ))}
-        </ul>
-    )}
-    {viewedStock && (
-        <div className="viewed-stock">
-            <p><strong>Item:</strong> {viewedStock.itemName}</p>
-            <p><strong>Quantity:</strong> {viewedStock.quantity}</p>
-        </div>
-    )}
-</div>
+                <h2>Manage Stock</h2>
+                <input 
+                    type="text" 
+                    placeholder="Item Name" 
+                    value={itemName} 
+                    onChange={(e) => setItemName(e.target.value)} 
+                />
+                <input 
+                    type="number" 
+                    placeholder="Quantity" 
+                    value={quantity} 
+                    onChange={(e) => setQuantity(Number(e.target.value))} 
+                />
+                {!isStockButtonHidden && (
+                    <>
+                        <button onClick={() => handleStockOperation("add")}>Add Stock</button>
+                        <button onClick={() => handleStockOperation("remove")}>Remove Stock</button>
+                    </>
+                )}
+                {message && <p className="message">{message}</p>}
+            </div>
+
 	   <div className="card">
                 <h2>Bulk Operations</h2>
                 <select value={operation} onChange={(e) => setOperation(e.target.value)}>
@@ -426,3 +432,4 @@ const exportToCSV = () => {
 };
 
 export default App;
+

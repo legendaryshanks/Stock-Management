@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
 
-const BACKEND_URL = "https://stock-management-9v8g.onrender.com"; // Update if running locally
+const BACKEND_URL = "BACKEND_URL"; // Update if running locally
 
 const App = () => {
     const [items, setItems] = useState([]);
